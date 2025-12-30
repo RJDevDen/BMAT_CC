@@ -1,0 +1,22 @@
+# Syntax Help
+#
+# filename.ext - Ignores a specific file anywhere
+# folder/ - Ignores an entire folder and its contents
+# *.ext - Ignores all files with a specific extension
+# /file.txt - Ignores a file only in the root directory
+# **/*.log - Ignores all .log files in any subdirectory
+# ! - Negates a rule (Un-ignores a file)
+
+# Ignores local VS Code settings (already handled by your Global ignore, but safe to repeat)
+.vscode/
+
+# Un-ignore the 3rd party tool (Global ignores all .exe's, so it needs to be enforced here)
+!BSArch/BSArch.exe
+
+# Ignore tool's own local exe builds
+# (The GitHub Action will build the official one, so this shouldn't be uploaded)
+BMAT_CC.exe
+
+# Ignore all temporary backup files created by editors
+*.bak
+*.tmp
