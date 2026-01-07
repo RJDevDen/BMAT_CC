@@ -5,7 +5,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <ApplicationIcon>BMAT-CC.ico</ApplicationIcon>
+    <ApplicationIcon>BMAT_CC.ico</ApplicationIcon>
 
     <Version>1.0.0</Version>
     <Product>"BMAT CC"</Product>
