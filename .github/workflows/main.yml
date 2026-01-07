@@ -1,9 +1,9 @@
-name: Build and Release BMAT_CC
+name: Build BMAT_CC (Draft Release)
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # Trigger by pushing a tag (e.g., git tag v1.0.0)
 
 jobs:
   build:
@@ -23,25 +23,44 @@ jobs:
         # This builds the EXE but it will be moved manually later
         run: dotnet publish -c Release -r win-x64 --self-contained true -o ./temp_build
 
+      - name: Set Release Filename
+        id: filename_step
+        shell: pwsh
+        run: |
+          # 1. Get Date in DDMMYYYY format
+          $date = Get-Date -Format "ddMMv"
+          
+          # 2. Get Version (strips 'v' from the tag if it exists)
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          
+          # 3. Combine into final name
+          $finalName = "BMAT_CC_${date}_${version}"
+          
+          # 4. Save to environment for next steps
+          Add-Content -Path $env:GITHUB_ENV -Value "RELEASE_NAME=$finalName"
+
       - name: Assemble Folder Structure
         shell: pwsh
         run: |
-          # 1. Create the deep directory structure
+          # 1. Create the deep directory structure for the mod zip
           $bundlePath = "staging/Data/Tools/BMAT_CC"
           New-Item -ItemType Directory -Path "$bundlePath/BSArch" -Force
 
           # 2. Copy the newly built EXE
           Copy-Item -Path "./temp_build/BMAT_CC.exe" -Destination "$bundlePath/"
 
-          # 3. Copy your required BSArch tool
+          # 3. Copy the required BSArch tool
           Copy-Item -Path "BSArch/BSArch.exe" -Destination "$bundlePath/BSArch/"
 
           # 4. Zip from the 'staging' root so 'Data' is the first folder inside the zip
-          Compress-Archive -Path "staging/*" -DestinationPath "BMAT_CC_v${{ github.ref_name }}.zip"
+          Compress-Archive -Path "staging/*" -DestinationPath "${{ env.RELEASE_NAME }}.zip"
 
-      - name: Create Release
+      - name: Create Private Draft Release
         uses: softprops/action-gh-release@v2
         with:
-          files: BMAT_CC_*.zip
+          files: "${{ env.RELEASE_NAME }}.zip"
+          draft: true
+          name: "BMAT_CC ${{ github.ref_name }}"
+          body: "Automated Build: ${{ env.RELEASE_NAME }}.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
