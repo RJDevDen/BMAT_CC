@@ -91,6 +91,12 @@ Function Get-ConfigurationVariables {
                 Return $false
             }
         }
+        try {
+            Set-Variable -Name 'GameName' -Value 'fallout4' -Scope Global -Force
+        } catch {
+            Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
+            Return $false
+        }
         Return $true
     } Else {
         Return $false
@@ -150,7 +156,7 @@ function Set-Logging {
     }
     If (Test-Path -LiteralPath $LogFilePath) {
         Try {
-            Write-HostAndLog -Message "Initiating data gathering and analysis stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Initiating data gathering and analysis stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             Return $true
         } Catch {
             Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
@@ -158,7 +164,7 @@ function Set-Logging {
         }
     } Else {
         Try {
-            Write-HostAndLog -Message "Log file created. Initiating data gathering and analysis stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Log file created. Initiating data gathering and analysis stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             Return $true
         } Catch {
             Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
@@ -246,7 +252,7 @@ function Get-FileWindow {
     If ($Message -eq $null -or $Message -eq "") {
         $Message = "BMAT failed to find {0} file on its own. Let BMAT know where it is." -f ($FileName)
     }
-    Write-HostAndLog -Message $Message -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message $Message -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
     [void] [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
     # Create a hidden dummy form to act as the "TopMost" owner
     $TopWindow = New-Object System.Windows.Forms.Form
@@ -303,7 +309,7 @@ function Get-FolderWindow {
         $Message = "BMAT failed to find `"..\{0}`" folder on its own. Let BMAT know where it is." -f ($FolderName)
     }
 
-    Write-HostAndLog -Message $Message -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message $Message -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
     [void] [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
     # Create a hidden dummy form to act as the "TopMost" owner
     $TopWindow = New-Object System.Windows.Forms.Form
@@ -416,6 +422,12 @@ function Get-DualDecisionWindow {
     $form.MaximizeBox = $false
 
     # Set form icon
+    $GUIIcon = $null
+    Try {
+        $GUIIcon = Get-BMATIcon -Type BMATCC
+    } Catch {
+        $GUIIcon = $null
+    }
     if ($Category) {
         switch ($Category) {
             "Information" { $sysIcon = [System.Drawing.SystemIcons]::Information }
@@ -425,9 +437,11 @@ function Get-DualDecisionWindow {
         }
         $form.Icon = $sysIcon
     } Else {
-        $IconPath = Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath 'BMAT-CC-16x16.ico'
-        if (Test-Path $iconPath -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
-            $form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
+        #$IconPath = Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath 'BMAT-CC-16x16.ico'
+        #if (Test-Path $iconPath -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
+        if ($GUIIcon -eq $null) {
+            #$form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
+            $form.Icon = $GUIIcon
         } else {
             # Extract a standard system icon (Information, Warning, Error, or Question)
             $sysIcon = [System.Drawing.SystemIcons]::Information
@@ -512,6 +526,12 @@ function Get-MessageWindow {
     $form.MaximizeBox = $false
 
     # Set form icon
+    $GUIIcon = $null
+    Try {
+        $GUIIcon = Get-BMATIcon -Type BMATCC
+    } Catch {
+        $GUIIcon = $null
+    }
     if ($Category) {
         switch ($Category) {
             "Information" { $sysIcon = [System.Drawing.SystemIcons]::Information }
@@ -521,9 +541,11 @@ function Get-MessageWindow {
         }
         $form.Icon = $sysIcon
     } Else {
-        $IconPath = Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath 'BMAT-CC-16x16.ico'
-        if (Test-Path $iconPath) {
-            $form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
+        #$IconPath = Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath 'BMAT-CC-16x16.ico'
+        #if (Test-Path $iconPath -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
+        if ($GUIIcon -eq $null) {
+            #$form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
+            $form.Icon = $GUIIcon
         } else {
             # Extract a standard system icon (Information, Warning, Error, or Question)
             $sysIcon = [System.Drawing.SystemIcons]::Information
@@ -691,7 +713,7 @@ Function Get-GameFolder {
     } Else {
         $Generation = "Old-Gen (Pre-April 2024)"
     }
-    Write-HostAndLog -Message ("{0} game (Gen: {1}) found in folder `"{2}`"." -f ((Get-Culture).TextInfo.ToTitleCase($GameName), $Generation, $GameFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message ("{0} game (Gen: {1}) found in folder `"{2}`"." -f ((Get-Culture).TextInfo.ToTitleCase($GameName), $Generation, $GameFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     Return $GameFolder
 }
 
@@ -725,12 +747,7 @@ function Get-ModsLoadOrder {
     }
     $ConfigUpdateResult = Update-ConfigFile -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -Property "LoadOrderFilePath" -Value $LoadOrderFilePath
     $LoadOrder = Get-Content -Path $LoadOrderFilePath | Where-Object { $_ -notmatch "\*|#" }
-    Try {
-        $GameCorePluginsCsvPath = Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath $GameCorePluginsCsv
-        $GameCorePluginFiles = (Import-Csv -Path $GameCorePluginsCsvPath -ErrorAction Stop | Where-Object { $_.game -eq $GameName }).plugin
-    } Catch {
-        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-    }
+    $GameCorePluginFiles = @('Fallout4.esm', 'DLCRobot.esm', 'DLCworkshop01.esm', 'DLCworkshop02.esm', 'DLCworkshop03.esm', 'DLCCoast.esm', 'DLCNukaWorld.esm')
     $LoadOrder = $GameCorePluginFiles + $CCPlugings + ($LoadOrder | Where-Object { $GameCorePluginFiles -notcontains $_ -and $CCPlugings -notcontains $_ })
     If (-not $ConfigUpdateResult) {
         Return $false
@@ -766,6 +783,27 @@ function Get-CCModsLoadOrder {
         $IndexedCCLoadOrder = $IndexedLoadOrder | Where-Object { $CCLoadOrder -contains $_.Plugin }
     }
     Return $IndexedCCLoadOrder
+}
+
+function Get-CCModsName {
+    $ContentCatalogPath = Join-Path -Path $env:LOCALAPPDATA -ChildPath $GameName -AdditionalChildPath 'ContentCatalog.txt'
+    If (Test-Path -LiteralPath $ContentCatalogPath -ErrorAction SilentlyContinue) {
+        $ContentCatalog = Get-Content -Path $ContentCatalogPath -Raw | ConvertFrom-Json -Depth 10
+        $Report = New-Object System.Collections.Generic.List[PSCustomObject]
+        foreach ($Key in $ContentCatalog.PSObject.Properties.Name) {
+            if ($Key -eq "ContentCatalog") { continue }
+            $ModTitle = $ContentCatalog.$Key.Title
+            foreach ($FileName in $ContentCatalog.$Key.Files) {
+                If ($FileName -match ".\esp|\.esl|\.esm") {
+                    $Report.Add([PSCustomObject]@{
+                            Plugin  = $FileName
+                            ModName = $ModTitle
+                        })
+                }
+            }
+        }
+    }
+    Return $Report
 }
 
 function Get-BSArchPath {
@@ -828,8 +866,6 @@ function Set-BMATFolders {
     $Global:TrackerFolder = Join-Path -Path $BMATFolder -ChildPath 'Tracker'
     $Result += Set-Folder -FolderName 'Logs' -ParentFolder $BMATFolder
     $Global:LogsFolder = Join-Path -Path $BMATFolder -ChildPath 'Logs'
-    $Result += Set-Folder -FolderName 'Lists' -ParentFolder $BMATFolder
-    $Global:ListsFolder = Join-Path -Path $BMATFolder -ChildPath 'Lists'
 
     $SelectedStagingFolderPath = $null
     If ($null -eq $BA2MergingStagingFolder -or $BA2MergingStagingFolder -eq "") {
@@ -912,106 +948,246 @@ function Set-BMATFilesClosed {
     )
     $MergedFilesTrackerPath = Join-Path -Path $TrackerFolder -ChildPath $MergedFilesTrackerName
     Set-FileClosed -FileNamePath $MergedFilesTrackerPath -FileDescription 'BMAT tracker file' -BMATFolder $BMATFolder
-    $SuffixList = @($ModWhiteListFilesSuffixCsv, $ModWhiteListFilesSuffix, $ModRetexturesListFilesSuffix, $ModUpdateListFilesSuffixCsv)
-    ForEach ($Suffix in $SuffixList) {
-        $BMATLists = Get-ChildItem -LiteralPath $ListsFolder | Where-Object { $_.Name -match ([regex]::Escape($Suffix) + "$") }
-        If ($BMATLists) {
-            ForEach ($File in $BMATLists) {
-                Set-FileClosed -FileNamePath $File.FullName -FileDescription 'BMAT list file'
-            }
+    #$SuffixList = @($ModWhiteListFilesSuffixCsv, $ModWhiteListFilesSuffix, $ModRetexturesListFilesSuffix, $ModUpdateListFilesSuffixCsv)
+    #ForEach ($Suffix in $SuffixList) {
+    #    $BMATLists = Get-ChildItem -LiteralPath $ListsFolder | Where-Object { $_.Name -match ([regex]::Escape($Suffix) + "$") }
+    #    If ($BMATLists) {
+    #        ForEach ($File in $BMATLists) {
+    #            Set-FileClosed -FileNamePath $File.FullName -FileDescription 'BMAT list file'
+    #        }
+    #    }
+    #}
+}
+
+function Get-BMATIcon {
+    param (
+        [parameter(Mandatory = $True)]
+        [ValidateSet("BMAT", "BMATCC")]
+        [string]$Type
+    )
+    switch ($Type) {
+        "BMAT" {
+            $IconBase64String = ''
+        }
+        "BMATCC" {
+            $IconBase64String = 'AAABAAEAEBAAAAAAIABCAQAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAAQAAAAEAgGAAAAH/P/YQAAAAFzUkdCAK7OHOkAAAAEZ0FNQQAAsY8L/GEFAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAA10lEQVQ4T2NgwAOmXlvyv+IQBKPLEQVgBiS25JFvgI+p5v9ATyswDcLoavACkIbuA5PhXiDJAJjt6OEAcwlRhoEVGqgQ74LnS/X+Y8MOupr/nyzWA9v6ZKbK/yczVDANAgmia0THIANANEjt/TZFhCEggcfTVY6ha0DHE9O0IK6AGoBiCMwgYjGKRhiA2XSo0+r/mYlmGC7oiHcjzoCWGPf/L5Yh2E3R7mD2vfmGxBsAol8u0wWzYfxdLdbEGYAPk2wAzCswmmQDYM4H0U9nqf6vCnFAMQAAwopq1Oon7YcAAAAASUVORK5CYII='
         }
     }
+    $IconBytes = [System.Convert]::FromBase64String($IconBase64String)
+    $MemoryStream = [System.IO.MemoryStream]::new($IconBytes)
+    $GuiIcon = [System.Drawing.Icon]::FromHandle(([System.Drawing.Bitmap]::FromStream($MemoryStream)).GetHicon())
+    Return $GuiIcon
+}
+
+function Set-EmptyESPPlugin {
+    param (
+        [string]$Path,
+        [string]$Name
+    )
+    $DestinationPath = Join-Path -Path $Path -ChildPath $Name
+    $DummyEspBase64 = 'VEVTNCoAAAAAAgAAAAAAAAAAAACDAAAASEVEUgwAAACAPwAAAAAACAAAQ05BTQgAREVGQVVMVABJTlRWBAABAAAA'
+    $EspBytes = [System.Convert]::FromBase64String($DummyEspBase64)
+    [System.IO.File]::WriteAllBytes($DestinationPath, $EspBytes)
+}
+
+function Set-ConfigDefault {
+    param (
+        [string]$ConfigPath
+    )
+    Write-Host "Creating default configuration file..." -ForegroundColor Gray
+    $DefaultConfig = @"
+{
+  "_comment": "The following property defines the folder where the original mods ba2 files will be moved to, to be use by BMAT for the BA2 merges and separate from your mod manager and game folder so the game doesn't try to double load them. If empty BMAT will ask once during run and will store the value here.",
+  "BA2MergingStagingFolder": "",
+  "_comment": "If you have a faster disk where you want to do the BA2 files extract and re-archive use this property which defines the folder where the ba2 files will be extracted, cleaned up and re-archived. If this property is empty the temporary folders will be created under 'BA2MergingStagingFolder' folder. BMAT automatically cleans up after itself to keep the disk usage low. It is recommended to keep this folder on a separate disk with sufficient disk space. If empty BMAT will ask once during run and will store the value here.",
+  "BA2MergingTempFolder": "",
+  "_comment": "The following property defines the path to the loadorder.txt file. If empty BMAT will ask once during run and will store the value here.",
+  "LoadOrderFilePath": "",
+  "_comment": "The following property defines the game folder path. If empty BMAT will ask once during run and will store the value here.",
+  "GameFolder": "",
+  "_comment": "The following property defines the path to xEdit's BSArch.exe or BSArch64.exe. If empty BMAT will ask once during run and will store the value here.",
+  "BSArchPath": "",
+  "_comment": "The following property defines the name of the new re-package mod name, the esp file name, and the ba2 file names.",
+  "BA2MergedModName": "BMAT_BA2_Merge",
+  "_comment": "The following property defines the which will be used by BMAT. 2 logs are always maintained by the script where one is current, and one is the previous log file.",
+  "LogFileName": "bmat_ba2_merge",
+  "_comment": "The following property defines the name of the csv file where BMAT will keep track of any processed mods and ba2 files. Once you start using BMAT deletion or manual modification of this file is not recommended.",
+  "MergedFilesTrackerName": "bmat_merged-files-tracker.csv",
+  "_comment": "List files extensions where BMAT will check if any of those are found in the mod ba2 files and report on them to flag a dirty ba2 file.",
+  "NonSupportedFilesFilter": "tga,psd,ini,exe,dll,yml",
+  "_comment": "(This option is experimental and should be used with caution) If this property is set to true BMAT will try and detect if in the original BA2 files there are any folders which are in the wrong place and will move them where they should be. For example, if there are any Textures folders in the original Main type BA2 file those will be moved to a new Textures BA2 merge. If there are any Main type (like Main, Interface, Materials, Meshes, Scripts, Sound, Sounds, Voices, Animations, Music, Video) folders in the original Textures BA2 file, those will be moved to to a new Main BA2 merge. If the original BA2 files contain some other folders (my_mod_folder1\\main\\my_mod_folder2\\my_mod_file) which contain Main or Textures folders, those will be relocated where they should be.",
+  "ModFolderRearange": "false"
+}
+"@
+    Try {
+        $DefaultConfig | Out-File $ConfigPath -Encoding utf8
+    } Catch {
+        Write-Host -Message "Failure with creating BMAT configuration file! Exiting..." -ForegroundColor DarkYellow
+        Return $false
+    }
+    Return $true
+}
+
+function Get-RandomTip {
+    $RandomTipsRoll = Get-Random -Minimum 1 -Maximum 101 # 1 to 100
+    if ($RandomTipsRoll -le 10) {
+        # 10% chance
+        $Tips = @(
+            "Enjoying the tool? A 'Like' on YouTube helps a lot!",
+            "Don't forget to Endorse BMAT on NexusMods if it saved you time!",
+            "Want to support development? Coffee is always appreciated at Ko-fi.",
+            "Check out my YouTube channel for more guides and tips and tricks!"
+        )
+        $SelectedBMATTip = $Tips | Get-Random
+    }
+    Return $SelectedBMATTip
 }
 
 #endregion FUNCTIONS
 
 #region SETUP
+
+# Set the console window maximised
+# 1. Define the Windows API function to control window state
+$WindowCode = @'
+[DllImport("user32.dll")]
+public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+[DllImport("kernel32.dll")]
+public static extern IntPtr GetConsoleWindow();
+'@
+$WinAPI = Add-Type -MemberDefinition $WindowCode -Name "Win32ShowWindow" -Namespace Win32Functions -PassThru
+# 2. Get the handle for the current console window
+$ConsoleHandle = $WinAPI::GetConsoleWindow()
+# 3. Maximize it (The number '3' represents the MAXIMIZE command, 1 = Normal, 2 = Minimize)
+$WinAPI::ShowWindow($ConsoleHandle, 3) | Out-Null
+
+if ($PSScriptRoot) { 
+    $BMATFolder = $PSScriptRoot
+}
+if (-not (Get-ChildItem -Path $BMATFolder -File | Where-Object { $_.Name -match "BMAT_CC.(exe|ps1)" })) {
+    $BMATExePath = [System.Environment]::ProcessPath
+    $BMATFolder = Split-Path -Parent $BMATExePath
+    Set-Location $BMATFolder
+}
+if (-not (Get-ChildItem -Path $BMATFolder -File | Where-Object { $_.Name -match "BMAT_CC.(exe|ps1)" })) {
+    $BMATFolder = Get-Item -Path '.'
+}
+
 $StartTime = Get-Date
+$BMATVersion = "1.0.0"
 $GameSupportedLooseFolders = @("Main", "Interface", "Materials", "Meshes", "MeshesExtra", "Scripts", "Sound", "Sounds", "Voices_en", "Voices", "Animations", "Music", "Video", "lodsettings", "vis", "Strings", "F4SE", "Notes", "Textures")
-#$BMATFolder = Get-Item -Path $PSScriptRoot
-#$BMATFolder = Get-Item -Path '.'
-$BMATExePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
-$BMATFolder = Split-Path -Parent $BMATExePath
-$ConfigFileName = 'Config.json'
+
+$Global:ConfigFileName = 'Config.json'
+$ConfigPath = Join-Path -Path $BMATFolder -ChildPath $ConfigFileName
+if (-not (Test-Path $ConfigPath)) {
+    $DefaultConfigResult = Set-ConfigDefault -ConfigPath $ConfigPath
+    If (-not $DefaultConfigResult) {
+        Write-Host -Message "Failure with creating BMAT configuration file! Exiting..." -ForegroundColor DarkYellow
+        Pause
+        Break
+    }
+    Write-Host "`nThank you for using BMAT CC (BA2 Merging Automation Tool) for Creation Club mods!" -ForegroundColor Cyan
+    Write-Host "`nIt looks like this is your first time running the tool.`n"
+    Write-Host "If you find this tool helpful, please consider:"
+    Write-Host "`t- Endorsing my tools/mods on NexusMods: " -NoNewline
+    Write-Host "https://www.nexusmods.com/profile/rjshadowface/mods" -ForegroundColor Cyan
+    Write-Host "`t- Subscribing to my YouTube channel: " -NoNewline
+    Write-Host "https://www.youtube.com/@RJDevDen" -ForegroundColor Cyan
+    Write-Host "`t- Buying me a coffee: " -NoNewline
+    Write-Host "https://ko-fi.com/rjdevden`n" -ForegroundColor Cyan
+    Pause
+}
+Write-Host "`n--- BMAT CC: BA2 Merging Automation Tool for Creation Club mods v$BMATVersion ---" -ForegroundColor Cyan
+Write-Host "`tDeveloped by RJ (RJDevDen)`n" -ForegroundColor Gray
 
 $GetConfigResult = Get-ConfigurationVariables -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
 If (-not $GetConfigResult) {
     Write-Host -Message "Failure with fetching BMAT configuration! Exiting..." -ForegroundColor DarkYellow
-    Exit
+    Pause
+    Break
 }
 
 $SetFoldersResult = Set-BMATFolders -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -BA2MergingStagingFolder $BA2MergingStagingFolder -BA2MergingTempFolder $BA2MergingTempFolder
 If (-not $SetFoldersResult) {
     Write-Host -Message "Failure setting up BMAT folders! Exiting..." -ForegroundColor DarkYellow
-    Exit
+    Pause
+    Break
 }
 
 $SetLoggingResult = Set-Logging -BMATFolder $BMATFolder
 If (-not $SetLoggingResult) {
     Write-Host -Message "Failure with setting up BMAT logging! Exiting..." -ForegroundColor DarkYellow
-    Exit
+    Pause
+    Break
 }
 
 Set-BMATFilesClosed -BMATFolder $BMATFolder
 
 $SetGameFolderResult = Update-GameFolder2Config -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
 If (-not $SetGameFolderResult) {
-    Write-HostAndLog -Message "Failure with finding and storing game folder in config file! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-    Exit
+    Write-HostAndLog -Message "Failure with finding and storing game folder in config file! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+    Pause
+    Break
 } Else {
     $GameDataFolder = Join-Path -Path $GameFolder -ChildPath 'Data'
 }
 
 $Global:OSDetails = Get-ComputerInfo
-Write-HostAndLog -Message ("OS runtime environment: {0} {1}" -f ($OSDetails.OSName, $OSDetails.OsArchitecture)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+Write-HostAndLog -Message ("OS runtime environment: {0} {1}" -f ($OSDetails.OSName, $OSDetails.OsArchitecture)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
 
 #$SetBSArchPathResult = Update-BSArchPath2Config -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -OsArchitecture $OSDetails.OsArchitecture
 $SetBSArchPathResult = Update-BSArchPath2Config -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -OsArchitecture '32-bit'
 If (-not $SetBSArchPathResult) {
-    Write-HostAndLog -Message "Failure with finding and storing BSArch path in config file! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-    Exit
+    Write-HostAndLog -Message "Failure with finding and storing BSArch path in config file! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+    Pause
+    Break
 }
 
 $ConfigResult = Get-ConfigurationVariables -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
 If (-not $ConfigResult) {
     Write-Host -Message "Failure with fetching BMAT configuration! Exiting..." -ForegroundColor DarkYellow
-    Exit
+    Pause
+    Break
 }
 
 $IndexedLoadOrder = Get-CCModsLoadOrder -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
 If (-not $IndexedLoadOrder) {
-    Write-HostAndLog -Message "Failure with fetching CC mods load order! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-    Exit
+    Write-HostAndLog -Message "Failure with fetching CC mods load order! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+    Pause
+    Break
 }
 Try {
     Add-Content -Path $LogFilePath -Value ("{0} - {1}: Load Order:`n{2}" -f ($(Get-Date), 'INFO', ($IndexedLoadOrder | Out-String)))
 } Catch {
-    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
 }
+
+$CCModsNames = Get-CCModsName
+
 #endregion SETUP
 
 #region RESTORE
 $RA_Response = ""
 If (Test-Path -Path $StagingWorkingFolder) {
     If (Get-ChildItem -LiteralPath $StagingWorkingFolder) {
-        Write-HostAndLog -Message "There are mods in BMAT staging folder." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "There are mods in BMAT staging folder." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         $RA_Response = Get-DualDecisionWindow -LButtonLabel 'Analysis' -RButtonLabel 'Restore' -Title 'BMAT Analysis or Restore?' -Message "There are Creation Club mods files in the BMAT staging folder '$StagingWorkingFolder'.`n`nDo you want to proceed with the BA2 files analysis prior the merge or you want to restore all previously merged mods BA2 files to your game folder?`n`nIf you have just updated BMAT (maybe as part of mod collection update) please perform a restore before proceeding with any mods files merge or re-merge to avoid unnecessary issues!" -BMATFolder $BMATFolder
         switch ($RA_Response) {
             'Yes' {
                 $RA_Response = 'a'
-                Write-HostAndLog -Message "BMAT will proceed with the BA2 analysis prior the merge process." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "BMAT will proceed with the BA2 analysis prior the merge process." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             }
             'No' {
                 $RA_Response = 'r'
-                Write-HostAndLog -Message "BMAT will now restore all the mods BA2 files to the game folder and will remove its current tracker file which will reinitialise the BA2 merge process." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "BMAT will now restore all the mods BA2 files to the game folder and will remove its current tracker file which will reinitialise the BA2 merge process." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             }
         }
     } Else {
-        Write-HostAndLog -Message "There are no mods in BMAT staging folder. BMAT will proceed with the BA2 files analysis prior the merge." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "There are no mods in BMAT staging folder. BMAT will proceed with the BA2 files analysis prior the merge." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         $RA_Response = 'a'
     }
 } Else {
-    Write-HostAndLog -Message ("There are no mods in BMAT staging folder. BMAT will proceed with the BA2 files analysis." -f ($ModFileDetails.Mod_Source_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message ("There are no mods in BMAT staging folder. BMAT will proceed with the BA2 files analysis." -f ($ModFileDetails.Mod_Source_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     $RA_Response = 'a'
 }
 
@@ -1022,28 +1198,28 @@ If ($RA_Response -eq "r") {
     $CCBA2InToolStaging = Get-ChildItem -LiteralPath $StagingWorkingFolder -Recurse -File | Where-Object { $_.Extension -eq ".ba2" -and $_.Directory.BaseName -eq 'CC_Mods' } | Select-Object -Property Name, Directory, FullName
     $ModFoldersInToolStaging = Get-ChildItem -LiteralPath $StagingWorkingFolder
     If ($CCBA2InToolStaging.Count -eq 0) {
-        Write-HostAndLog -Message "No mods BA2 files were found in BMAT staging folder." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "No mods BA2 files were found in BMAT staging folder." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     } Else {
         If ($CCBA2InToolStaging.Count -gt 0) {
             $Counter = 1
             ForEach ($File in $CCBA2InToolStaging) {
-                Write-HostAndLog -Message ("Restoring back BA2 file `"{0}`" to `"{1}`"." -f ($File.Name, $GameDataFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Restoring back BA2 file `"{0}`" to `"{1}`"." -f ($File.Name, $GameDataFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Write-Progress -Id 0 -Activity "BA2 Restore..." -Status ('    {0}% complete' -f ([math]::Round((($Counter / ($CCBA2InToolStaging).Count) * 100)))) -PercentComplete (($Counter / $CCBA2InToolStaging.Count) * 100)
                 $Counter++
                 If (Test-Path -LiteralPath $File.FullName.Replace($File.Directory.FullName, $GameDataFolder)) {
-                    Write-HostAndLog -Message ("BA2 file `"{0}`" is already in the game 'Data' folder. Removing BA2 file from BMAT staging." -f ($File.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("BA2 file `"{0}`" is already in the game 'Data' folder. Removing BA2 file from BMAT staging." -f ($File.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     Try {
                         $ProgressPreference = 'SilentlyContinue'
                         Remove-Item -LiteralPath $File.FullName -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 } Else {
                     Try {
                         Move-Item -LiteralPath $File.FullName -Destination $GameDataFolder -ErrorAction Stop
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
             }
@@ -1055,108 +1231,110 @@ If ($RA_Response -eq "r") {
                     Remove-Item -LiteralPath $Folder.FullName -ErrorAction Stop
                     $ProgressPreference = 'Continue'
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
             } Else {
-                Write-HostAndLog -Message ("Something went wrong. Folder `"{0}`" is not empty. Move the files manually to `"{1}`" if required." -f ($Folder.FullName, $Folder.FullName.Replace($StagingWorkingFolder, $GameDataFolder))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Something went wrong. Folder `"{0}`" is not empty. Move the files manually to `"{1}`" if required." -f ($Folder.FullName, $Folder.FullName.Replace($StagingWorkingFolder, $GameDataFolder))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
             }
         }
     }
     $MergedFilesTrackerPath = Join-Path -Path $TrackerFolder -ChildPath $MergedFilesTrackerName
     If (Test-Path -LiteralPath $MergedFilesTrackerPath) {
-        Write-HostAndLog -Message ("Removing tracker file `"{0}`"." -f ($MergedFilesTrackerPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Removing tracker file `"{0}`"." -f ($MergedFilesTrackerPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             $ProgressPreference = 'SilentlyContinue'
             Remove-Item -LiteralPath $MergedFilesTrackerPath -ErrorAction Stop
             $ProgressPreference = 'Continue'
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
     } Else {
-        Write-HostAndLog -Message "Tracker file was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "Tracker file was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     }
     If (Test-Path $OutputWorkingFolder) {
-        Write-HostAndLog -Message ("Removing BMAT output folder `"{0}`"." -f ($OutputWorkingFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Removing BMAT output folder `"{0}`"." -f ($OutputWorkingFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             $ProgressPreference = 'SilentlyContinue'
             Remove-Item -LiteralPath $OutputWorkingFolder -Recurse -ErrorAction Stop
             $ProgressPreference = 'Continue'
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
     } Else {
-        Write-HostAndLog -Message "BMAT output folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "BMAT output folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     }
     If (Test-Path $TemporaryWorkingFolder) {
-        Write-HostAndLog -Message ("Removing BMAT temp folder `"{0}`"." -f ($TemporaryWorkingFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Removing BMAT temp folder `"{0}`"." -f ($TemporaryWorkingFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             $ProgressPreference = 'SilentlyContinue'
             Remove-Item -LiteralPath $TemporaryWorkingFolder -Recurse -ErrorAction Stop
             $ProgressPreference = 'Continue'
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
     } Else {
-        Write-HostAndLog -Message "BMAT temp folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "BMAT temp folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     }
     If (Test-Path $TemporaryMainFolder) {
-        Write-HostAndLog -Message ("Removing BMAT temp main folder `"{0}`"." -f ($TemporaryMainFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Removing BMAT temp main folder `"{0}`"." -f ($TemporaryMainFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             $ProgressPreference = 'SilentlyContinue'
             Remove-Item -LiteralPath $TemporaryMainFolder -Recurse -ErrorAction Stop
             $ProgressPreference = 'Continue'
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
     } Else {
-        Write-HostAndLog -Message "BMAT temp main folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "BMAT temp main folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     }
     If (Test-Path $TemporaryTexturesFolder) {
-        Write-HostAndLog -Message ("Removing BMAT temp textures folder `"{0}`"." -f ($TemporaryTexturesFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Removing BMAT temp textures folder `"{0}`"." -f ($TemporaryTexturesFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             $ProgressPreference = 'SilentlyContinue'
             Remove-Item -LiteralPath $TemporaryTexturesFolder -Recurse -ErrorAction Stop
             $ProgressPreference = 'Continue'
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
     } Else {
-        Write-HostAndLog -Message "BMAT temp textures folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "BMAT temp textures folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     }
     If (Test-Path $CleanUpFolder) {
-        Write-HostAndLog -Message ("Removing BMAT cleanup folder `"{0}`"." -f ($CleanUpFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Removing BMAT cleanup folder `"{0}`"." -f ($CleanUpFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             $ProgressPreference = 'SilentlyContinue'
             Remove-Item -LiteralPath $CleanUpFolder -Recurse -ErrorAction Stop
             $ProgressPreference = 'Continue'
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
     } Else {
-        Write-HostAndLog -Message "BMAT cleanup folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "BMAT cleanup folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     }
     If (Test-Path $StagingWorkingFolder) {
-        Write-HostAndLog -Message ("Removing BMAT staging sub-folder `"{0}`"." -f ($StagingWorkingFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Removing BMAT staging sub-folder `"{0}`"." -f ($StagingWorkingFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             $ProgressPreference = 'SilentlyContinue'
             Remove-Item -LiteralPath $StagingWorkingFolder -Recurse -ErrorAction Stop
             $ProgressPreference = 'Continue'
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
     } Else {
-        Write-HostAndLog -Message "BMAT staging sub-folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "BMAT staging sub-folder was already removed." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     }
     Get-MessageWindow -Title "Remove BMAT merged mod!" -Message "To complete the restore process you need to manually remove the created by BMAT merge mod '$BA2MergedModName' from yor mod manager!" -Category Warning | Out-Null
 
-    Write-HostAndLog -Message "BMAT restoration finished. Closing BMAT..." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-    Exit
+    Write-HostAndLog -Message "BMAT restoration finished. Closing BMAT..." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+    Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
+    Pause
+    Break
 }
 #endregion RESTORE
 
 #region ANALYSIS
 If ($RA_Response -eq "a") {
-    Write-HostAndLog -Message "Starting Creation Club mods files analysis" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Starting Creation Club mods files analysis" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     
     # Creating candidates list with CC mods
     $FullModList = @()
@@ -1169,7 +1347,7 @@ If ($RA_Response -eq "a") {
         Try {
             $BA2FilesList = Get-ChildItem -LiteralPath $GameDataFolder -ErrorAction Stop | Where-Object { $_.Extension -eq '.ba2' -and $_.BaseName -match ([regex]::Escape($ModName) + " - (main|textures)") }
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
         $FileDetails = @()
         ForEach ($File in $BA2FilesList) {
@@ -1187,16 +1365,16 @@ If ($RA_Response -eq "a") {
             If ($ArchiveType -eq 'GNRL') {
                 $DiscoveredType = 'Main'
                 If ($Type -ne $DiscoveredType) {
-                    Write-HostAndLog -Message ("BA2 file `"{0}`" part of mod `"{1}`" was named as `"{2}`" type, but it was packaged as `"{3}`"" -f ($File.Name, $ModName, $Type, $DiscoveredType)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("BA2 file `"{0}`" part of mod `"{1}`" was named as `"{2}`" type, but it was packaged as `"{3}`"" -f ($File.Name, $ModName, $Type, $DiscoveredType)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                 }
             } elseif ($ArchiveType -eq 'DX10') {
                 $DiscoveredType = 'Textures'
                 If ($Type -ne $DiscoveredType) {
-                    Write-HostAndLog -Message ("BA2 file `"{0}`" part of mod `"{1}`" was named as `"{2}`" type, but it was packaged as `"{3}`"" -f ($File.Name, $ModName, $Type, $DiscoveredType)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("BA2 file `"{0}`" part of mod `"{1}`" was named as `"{2}`" type, but it was packaged as `"{3}`"" -f ($File.Name, $ModName, $Type, $DiscoveredType)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                 }
             } else {
                 $DiscoveredType = 'UNKNOWN'
-                Write-HostAndLog -Message ("BA2 file `"{0}`" part of mod `"{1}`" was named as `"{2}`" type, but its packaging type is `"UNKNOWN`"" -f ($File.Name, $ModName, $Type)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("BA2 file `"{0}`" part of mod `"{1}`" was named as `"{2}`" type, but its packaging type is `"UNKNOWN`"" -f ($File.Name, $ModName, $Type)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
             }
 
             $Properties = [ordered]@{
@@ -1224,7 +1402,7 @@ If ($RA_Response -eq "a") {
             "Mod_Id"                = $null;
             "isPrimary"             = $null;
             "fileType"              = $null;
-            "Mod_Display_Name"      = $ModName;
+            "Mod_Display_Name"      = ($CCModsNames | Where-Object { $_.Plugin -eq $Plugin }).ModName;
             "Mod_Secondary_Name"    = $null;
             "Enabled"               = $true;
             "Game"                  = $GameName;
@@ -1250,8 +1428,9 @@ If ($RA_Response -eq "a") {
 
     # Checking if any mods are in the full list
     If (($FullModList | Measure-Object).Count -lt 1) {
-        Write-HostAndLog -Message "No merge candidates identified! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-        Exit
+        Write-HostAndLog -Message "No merge candidates identified! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+        Pause
+        Break
     }
 
     # Importing the tracker file and updating the list of mods with their location in the repackage staging folder
@@ -1269,25 +1448,25 @@ If ($RA_Response -eq "a") {
             }
         }
         $BA2RepackageTracker = $DateUpdatedTracker
-    }
-    If ($StagedFiles.Count -eq 0) {
-        $BA2RepackageTracker = $null
-        Write-HostAndLog -Message ("Found BMAT tracker file, but the associated files in BMAT staging are missing. This tracker file will be removed as it looks like it is a leftover from a clean up.") -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-        Write-HostAndLog -Message ("Removing tracker file `"{0}`"." -f ($MergedFilesTrackerPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-        Try {
-            $ProgressPreference = 'SilentlyContinue'
-            Remove-Item -LiteralPath $MergedFilesTrackerPath -ErrorAction Stop
-            $ProgressPreference = 'Continue'
-        } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        If ($StagedFiles.Count -eq 0) {
+            $BA2RepackageTracker = $null
+            Write-HostAndLog -Message ("Found BMAT tracker file, but the associated files in BMAT staging are missing. This tracker file will be removed as it looks like it is a leftover from a clean up.") -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
+            Write-HostAndLog -Message ("Removing tracker file `"{0}`"." -f ($MergedFilesTrackerPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+            Try {
+                $ProgressPreference = 'SilentlyContinue'
+                Remove-Item -LiteralPath $MergedFilesTrackerPath -ErrorAction Stop
+                $ProgressPreference = 'Continue'
+            } Catch {
+                Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+            }
         }
     }
     IF ($BA2RepackageTracker) {
-        Write-HostAndLog -Message "Importing the tracker file and updating the list of mods with their location in the repackage staging folder" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "Importing the tracker file and updating the list of mods with their location in the repackage staging folder" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         Try {
             Add-Content -Path $LogFilePath -Value ("{0} - {1}: Input tracker details are:`n{2}" -f ($(Get-Date), 'INFO', ($BA2RepackageTracker | ConvertTo-Json | Out-String)))
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
         $Counter = 1
         ForEach ($File in $BA2RepackageTracker) {
@@ -1331,7 +1510,7 @@ If ($RA_Response -eq "a") {
                     }
                     ($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name }).BA2_Files_Details += New-Object PSObject -prop $Properties
                 } Else {
-                    Write-HostAndLog -Message ("Unhandled match and update from tracker file.`n`nFullList match:`n{0}`nTracker match:`n{1}" -f ((($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name }) | ConvertTo-Json | Out-String), ($File | ConvertTo-Json | Out-String))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Unhandled match and update from tracker file.`n`nFullList match:`n{0}`nTracker match:`n{1}" -f ((($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name }) | ConvertTo-Json | Out-String), ($File | ConvertTo-Json | Out-String))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
             }
         }
@@ -1339,11 +1518,11 @@ If ($RA_Response -eq "a") {
     Try {
         Add-Content -Path $LogFilePath -Value ("{0} - {1}: Full Mods Details (if tracker is available the ba2 files details will be updated with the details from it):`n{2}" -f ($(Get-Date), 'INFO', (ConvertTo-Json ($FullModList | Where-Object { $_.Game -eq $GameName }) -Depth 10)))
     } Catch {
-        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
     }
 
     # Creating change tracker and checking if any of the mods and the ba2 files were added, removed, or changed which would require BA2 repackaging.
-    Write-HostAndLog -Message "Creating change tracker and checking if any mods files were changed which would require BA2 repackaging." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Creating change tracker and checking if any mods files were changed which would require BA2 repackaging." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     $BA2FilesCandidatesList = $FullModList
     If ($BA2RepackageTracker) {
         # Creating change tracker
@@ -1353,7 +1532,7 @@ If ($RA_Response -eq "a") {
             Write-Progress -Id 0 -Activity 'Existing Mod Check...' -Status ('    {0}% complete' -f ([math]::Round((($Counter / $BA2RepackageTracker.Count) * 100)))) -PercentComplete (($Counter / $BA2RepackageTracker.Count) * 100)
             $Counter++
 
-            Write-HostAndLog -Message ("Checking file `"{0}`" part of mod `"{1}`" for changes which would require BA2 repackaging." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("Checking file `"{0}`" part of mod `"{1}`" for changes which would require BA2 repackaging." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Display_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
 
             $NewMod = $null
             $BARepackage = $false
@@ -1361,29 +1540,29 @@ If ($RA_Response -eq "a") {
             $BA2FileDetail = $ModDetail.BA2_Files_Details | Where-Object { $_.Name -eq $FileInTracker.Mod_BA2_File }
 
             If ($FullModList.Mod_Name -notcontains $FileInTracker.Mod_Name) {
-                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" was removed from the game, so the BA2 will be re-packaged again and the mod files will be removed from the repackaging folder." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" was removed from the game, so the BA2 will be re-packaged again and the mod files will be removed from the repackaging folder." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $Status = "Removed_from_Game"
                 $BARepackage = $true
             } ElseIf (($FullModList | Where-Object { $_.Mod_Name -eq $FileInTracker.Mod_Name }) -and ($FullModList | Where-Object { $_.Mod_Name -eq $FileInTracker.Mod_Name }).Count -gt 1) {
                 If (($null -ne $BA2FileDetail -and $BA2FileDetail.Size_Bytes -eq $FileInTracker.Mod_BA2_Size_Bytes) -and ($null -ne $BA2FileDetail -and $BA2FileDetail.Modified.DateTime -eq $FileInTracker.Mod_BA2_Modified.DateTime)) {
-                    Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker. No changes detected, so no BA2 re-package is required for this mod." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker. No changes detected, so no BA2 re-package is required for this mod." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     $Status = "Identical_to_Tracker"
                     $BARepackage = $false
                 } Else {
-                    Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker, but it was updated, so the BA2 will be re-packaged again." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker, but it was updated, so the BA2 will be re-packaged again." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     $Status = "Updated_Changed"
                     $BARepackage = $true
                 }
             } ElseIF (($null -ne $BA2FileDetail -and $BA2FileDetail.Size_Bytes -ne $FileInTracker.Mod_BA2_Size_Bytes) -or ($null -ne $BA2FileDetail -and $BA2FileDetail.Modified.DateTime -ne $FileInTracker.Mod_BA2_Modified.DateTime)) {
-                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker, but it was updated, so the BA2 will be re-packaged again." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker, but it was updated, so the BA2 will be re-packaged again." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $Status = "Updated_Changed"
                 $BARepackage = $true
             } ElseIf (($null -ne $BA2FileDetail -and $BA2FileDetail.Size_Bytes -eq $FileInTracker.Mod_BA2_Size_Bytes) -and ($null -ne $BA2FileDetail -and $BA2FileDetail.Modified.DateTime -eq $FileInTracker.Mod_BA2_Modified.DateTime)) {
-                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker. No changes detected, so no BA2 re-package is required for this mod." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" is already in the tracker. No changes detected, so no BA2 re-package is required for this mod." -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $Status = "Identical_to_Tracker"
                 $BARepackage = $false
             } Else {
-                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" in the tracker, but the file change status is currently not handled by BMAT. Collect logs and send to BMAT author. FileInTracker Output:`n{2}`nMod Details:`n{3}" -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name, ($FileInTracker | Out-String), (($FullModList | Where-Object { ($_.Mod_Name -eq $FileInTracker.Mod_Name) -and ($_.Mod_Name -eq $FileInTracker.Mod_Name) }) | ConvertTo-Json))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("File `"{0}`" part of mod `"{1}`" in the tracker, but the file change status is currently not handled by BMAT. Collect logs and send to BMAT author. FileInTracker Output:`n{2}`nMod Details:`n{3}" -f ($FileInTracker.Mod_BA2_File, $FileInTracker.Mod_Name, ($FileInTracker | Out-String), (($FullModList | Where-Object { ($_.Mod_Name -eq $FileInTracker.Mod_Name) -and ($_.Mod_Name -eq $FileInTracker.Mod_Name) }) | ConvertTo-Json))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 $Status = "Unhandled_Status"
                 $BARepackage = $false
             }
@@ -1436,7 +1615,7 @@ If ($RA_Response -eq "a") {
         If ($null -ne $NewModsList) {
             $Counter = 1
             ForEach ($Mod in $NewModsList) {
-                Write-HostAndLog -Message ("Checking newly processed mod `"{0}`"." -f ($Mod.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Checking newly processed mod `"{0}`"." -f ($Mod.Mod_Display_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Write-Progress -Id 0 -Activity 'New Mod Check...' -Status ('    {0}% complete' -f ([math]::Round((($Counter / $NewModsList.Count) * 100)))) -PercentComplete (($Counter / $NewModsList.Count) * 100)
                 $Counter++
                 If ($Mod.CC_Mod -eq $true) {
@@ -1446,7 +1625,7 @@ If ($RA_Response -eq "a") {
                 }
                 $Mod.Mod_Target_Path = $ModTargetPath
                 ForEach ($File in $Mod.BA2_Files_Details) {
-                    Write-HostAndLog -Message ("Checking file `"{0}`"." -f ($File.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Checking file `"{0}`"." -f ($File.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     IF ($File.Type -eq "Main" -and $Mod.CC_Mod -eq $True) {
                         $MergeGroup = $BA2MergedModName + "_UserAdded_CC"
                         $BA2Package = $MergeGroup + " - Main.ba2"
@@ -1460,7 +1639,7 @@ If ($RA_Response -eq "a") {
                     }
                     $Status = "New_Candidate"
                     $Properties = [ordered]@{
-                        "Mod_Display_Name" = $Mod.Mod_Display_Name;
+                        "Mod_Display_Name" = ($CCModsNames | Where-Object { $_.Plugin -eq $File."Plugin_Name" }).ModName;
                         "Mod_Name"         = $Mod.Mod_Name;
                         "Mod_BA2_File"     = $File.Name;
                         "Mod_Loose_Folder" = $null;
@@ -1488,12 +1667,12 @@ If ($RA_Response -eq "a") {
         # Checking for removed BA2 files as part of mod updates
         $ToBeRemovedObj = ($ModsChangeTracker | Group-Object -Property Mod_Name | Where-Object { $_.Group.Status -contains "Updated_Changed" -and $_.Group.Updated_By -eq $null }).Group | Where-Object { $_.Updated_By -eq $null }
         If ($null -ne $ToBeRemovedObj) {
-            Write-HostAndLog -Message "Checking for any removed files from mods after updates" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Checking for any removed files from mods after updates" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             $Counter = 1
             ForEach ($Obj in $ToBeRemovedObj) {
                 Write-Progress -Id 0 -Activity 'Removed Files from Mods Check...' -Status ('    {0}% complete' -f ([math]::Round((($Counter / $ToBeRemovedObj.Count) * 100)))) -PercentComplete (($Counter / $ToBeRemovedObj.Count) * 100)
                 $Counter++
-                Write-HostAndLog -Message ("Mod `"{0}`" was updated but file `"{1}`" does not exist in the new mod version, so it will be removed from BMAT staging." -f ($Obj.Mod_Name, $Obj.Mod_BA2_File )) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Mod `"{0}`" was updated but file `"{1}`" does not exist in the new mod version, so it will be removed from BMAT staging." -f ($Obj.Mod_Name, $Obj.Mod_BA2_File )) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $Obj.Status = "Removed_from_Mod"
                 If ($ModsChangeTracker | Where-Object { $_.Mod_Name -eq $Obj.Mod_Name -and $_.LO_Index -ne $null }) {
                     $Obj.LO_Index = ($ModsChangeTracker | Where-Object { $_.Mod_Name -eq $Obj.Mod_Name -and $_.LO_Index -ne $null })[0].LO_Index
@@ -1520,7 +1699,7 @@ If ($RA_Response -eq "a") {
                 If ($null -ne $Mod.BA2_Files_Details -and $Mod.BA2_Files_Details -ne "") {
                     ForEach ($File in $Mod.BA2_Files_Details) {
                         If (($ModsChangeTracker | Where-Object { $_.Updated_By -eq $Mod.Mod_Name }).Mod_BA2_File -notcontains $File.Name) {
-                            Write-HostAndLog -Message ("BA2 file `"{0}`" had been found part of mod `"{1}`" which was not processed by BMAT before. Adding it now." -f ($File.Name, $Mod.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message ("BA2 file `"{0}`" had been found part of mod `"{1}`" which was not processed by BMAT before. Adding it now." -f ($File.Name, $Mod.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                             IF ($File.Type -eq "Main" -and $Mod.CC_Mod -eq $True) {
                                 $MergeGroup = $BA2MergedModName + "_UserAdded_CC"
                                 $BA2Package = $MergeGroup + " - Main.ba2"
@@ -1534,7 +1713,7 @@ If ($RA_Response -eq "a") {
                             }
                             $Status = "New_Candidate"
                             $Properties = [ordered]@{
-                                "Mod_Display_Name" = $Mod.Mod_Display_Name;
+                                "Mod_Display_Name" = ($CCModsNames | Where-Object { $_.Plugin -eq $File."Plugin_Name" }).ModName;
                                 "Mod_Name"         = $Mod.Mod_Name;
                                 "Mod_BA2_File"     = $File.Name;
                                 "Mod_Loose_Folder" = $null;
@@ -1563,7 +1742,7 @@ If ($RA_Response -eq "a") {
 
         # Flagging a BA2 merge for repackage even if one of its BA2 files had changed or was removed, or disabled
         $Counter = 1
-        Write-HostAndLog -Message ("Checking which BA2 merges need repackage or if any BA2 merges will be retired." -f ($Mod.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("Checking which BA2 merges need repackage or if any BA2 merges will be retired." -f ($Mod.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         ForEach ($BA2File in ($ModsChangeTracker.In_BA2 | Sort-Object -Unique)) {
             Write-Progress -Id 0 -Activity 'BA2 Merge Check...' -Status ('    {0}% complete' -f ([math]::Round((($Counter / ($ModsChangeTracker.In_BA2 | Sort-Object -Unique).Count) * 100)))) -PercentComplete (($Counter / ($ModsChangeTracker.In_BA2 | Sort-Object -Unique).Count) * 100)
             $Counter++
@@ -1581,7 +1760,7 @@ If ($RA_Response -eq "a") {
         $ModsChangeTracker = @()
         $Counter = 1
         ForEach ($Mod in ($BA2FilesCandidatesList | Where-Object { $_.Enabled -eq $true })) {
-            Write-HostAndLog -Message ("Checking newly processed mod `"{0}`"." -f ($Mod.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("Checking newly processed mod `"{0}`"." -f ($Mod.Mod_Display_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             Write-Progress -Id 0 -Activity 'New Mod Check...' -Status ('    {0}% complete' -f ([math]::Round((($Counter / ($BA2FilesCandidatesList | Where-Object { $_.Enabled -eq $true }).Count) * 100)))) -PercentComplete (($Counter / ($BA2FilesCandidatesList | Where-Object { $_.Enabled -eq $true }).Count) * 100)
             $Counter++
             If ($Mod.CC_Mod -eq $true) {
@@ -1591,7 +1770,7 @@ If ($RA_Response -eq "a") {
             }
             $Mod.Mod_Target_Path = $ModTargetPath
             ForEach ($File in $Mod.BA2_Files_Details) {
-                Write-HostAndLog -Message ("Checking file `"{0}`"." -f ($File.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Checking file `"{0}`"." -f ($File.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 IF ($File.Type -eq "Main") {
                     If ($Mod.CC_Mod -eq $True) {
                         $MergeGroup = $BA2MergedModName + "_UserAdded_CC"
@@ -1615,7 +1794,7 @@ If ($RA_Response -eq "a") {
                 }
                 $Status = "New_Candidate"
                 $Properties = [ordered]@{
-                    "Mod_Display_Name" = $Mod.Mod_Display_Name;
+                    "Mod_Display_Name" = ($CCModsNames | Where-Object { $_.Plugin -eq $File."Plugin_Name" }).ModName;
                     "Mod_Name"         = $Mod.Mod_Name;
                     "Mod_BA2_File"     = $File.Name;
                     "Mod_Loose_Folder" = $null;
@@ -1663,36 +1842,38 @@ If ($RA_Response -eq "a") {
         $MembersCounter += New-Object PSObject -prop $Properties
     }
 
-    Write-HostAndLog -Message "Data gathering and analysis stage of the process has completed" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-    Write-HostAndLog -Message ("The following list of potential mods ba2 files candidates were identified by BMAT:`n{0}" -f ($ModsChangeTracker | Format-Table -Property @{e = 'Mod_Display_Name'; width = 28 }, @{e = 'Mod_Name'; width = 28 }, @{e = 'Mod_BA2_File'; width = 23 }, @{e = 'Status'; width = 20 }, @{e = 'Updated_By'; width = 28 }, @{e = 'In_BA2'; width = 23 }, @{e = 'BA2_Re_Merge'; width = 5 }, @{e = 'Plugin_Name'; width = 23 }, @{e = 'LO_Index'; width = 5 } -Wrap | Out-String)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Data gathering and analysis stage of the process has completed" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+    Write-HostAndLog -Message ("The following list of potential mods ba2 files candidates were identified by BMAT:`n{0}" -f ($ModsChangeTracker | Format-Table -Property @{e = 'Mod_Display_Name'; width = 28 }, @{e = 'Mod_Name'; width = 28 }, @{e = 'Mod_BA2_File'; width = 23 }, @{e = 'Status'; width = 20 }, @{e = 'Updated_By'; width = 28 }, @{e = 'In_BA2'; width = 23 }, @{e = 'BA2_Re_Merge'; width = 5 }, @{e = 'Plugin_Name'; width = 23 }, @{e = 'LO_Index'; width = 5 } -Wrap | Out-String)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
 } 
 #endregion ANALYSIS
 
 #region MERGE
 if (-not $BA2FilesCandidatesList) {
-    Write-HostAndLog -Message "Based on the current BMAT configuration and, and based on the mods data analysis there are no BA2 candidates found which can be merged. Exiting..." -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Based on the current BMAT configuration and, and based on the mods data analysis there are no BA2 candidates found which can be merged. Exiting..." -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
     Get-MessageWindow -Title "No BA2 candidates!" -Message "Based on the current BMAT configuration and, and based on the mods data analysis there are no BA2 candidates found which can be merged. Exiting..." -Category Warning | Out-Null
-    Exit
+    Pause
+    Break
 } elseif (($MembersCounter.Qt_Changed + $MembersCounter.Qt_Status_For_Merge + $MembersCounter.Qt_Status_Removed_from_Game | Measure-Object -Sum).Sum -eq 0) {
-    Write-HostAndLog -Message "No BA2 candidates found which need merging or re-merging. Exiting..." -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "No BA2 candidates found which need merging or re-merging. Exiting..." -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
     Get-MessageWindow -Title "No BA2 candidates!" -Message "No BA2 candidates found which need merging or re-merging. Exiting..." -Category Warning | Out-Null
-    Exit
+    Pause
+    Break
 } else {
     $ME_Response = Get-DualDecisionWindow -LButtonLabel 'Merge' -RButtonLabel 'Exit' -Title 'BMAT Merge or Exit?' -Message "BMAT had finished with the Creation Club mods files analysis. Check if you are happy with the planned actions.`nAny mods files marked with 'True' under 'BA2_Re_Merge' will be merged or re-merged into a BA2 merge file.`n`nDo you want to proceed with the BA2 files merge or you want to exit BMAT?" -BMATFolder $BMATFolder
     switch ($ME_Response) {
         'Yes' {
             $ME_Response = 'm'
-            Write-HostAndLog -Message "BMAT will proceed with the BA2 merge or re-merge process." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "BMAT will proceed with the BA2 merge or re-merge process." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         }
         'No' {
-            Write-HostAndLog -Message "You chose to exit BMAT. Exiting..." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-            Exit
+            Write-HostAndLog -Message "You chose to exit BMAT. Exiting..." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+            Break
         }
     }
 }
 
 If ($ME_Response -eq "m") {
-    Write-HostAndLog -Message "Starting Creation Club mods files merge." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Starting Creation Club mods files merge." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
 
     # Checking disk available space for merge to proceed
     $NewModsSpaceRq = (($FullModList | Where-Object { (($ModsChangeTracker | Where-Object { $_.Status -eq "New_Candidate" }).Mod_Name | Sort-Object -Unique) -contains $_.Mod_Name }).Mod_Size_Bytes | Measure-Object -Sum).Sum
@@ -1706,10 +1887,11 @@ If ($ME_Response -eq "m") {
         }
         $StagingDiskFreeSpace = (Get-PSDrive (Split-Path $BA2MergingStagingFolder -Qualifier).Replace(':', '')).Free
         If ($StagingDiskFreeSpace -gt $Staging_ModsMergeSpaceRq) {
-            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingStagingFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingStagingFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         } Else {
-            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingStagingFolder -Qualifier), [math]::Round((($Staging_ModsMergeSpaceRq - $StagingDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-            Exit
+            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingStagingFolder -Qualifier), [math]::Round((($Staging_ModsMergeSpaceRq - $StagingDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+            Pause
+            Break
         }
     } ElseIf ((Split-Path $GameDataFolder -Qualifier) -eq (Split-Path $BA2MergingStagingFolder -Qualifier) -and (Split-Path $GameDataFolder -Qualifier) -ne (Split-Path $BA2MergingTempFolder -Qualifier)) {
         If ($NewChangedModsSpaceRq -gt $OldChangedModsSpaceRq) {
@@ -1719,10 +1901,11 @@ If ($ME_Response -eq "m") {
         }
         $TempDiskFreeSpace = (Get-PSDrive (Split-Path $BA2MergingTempFolder -Qualifier).Replace(':', '')).Free
         If ($TempDiskFreeSpace -gt $Temp_ModsMergeSpaceRq) {
-            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingTempFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingTempFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         } Else {
-            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingTempFolder -Qualifier), [math]::Round((($Temp_ModsMergeSpaceRq - $TempDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-            Exit
+            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingTempFolder -Qualifier), [math]::Round((($Temp_ModsMergeSpaceRq - $TempDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+            Pause
+            Break
         }
     } ElseIf ((Split-Path $GameDataFolder -Qualifier) -ne (Split-Path $BA2MergingStagingFolder -Qualifier) -and (Split-Path $BA2MergingStagingFolder -Qualifier) -eq (Split-Path $BA2MergingTempFolder -Qualifier)) {
         If ($NewChangedModsSpaceRq -gt $OldChangedModsSpaceRq) {
@@ -1732,10 +1915,11 @@ If ($ME_Response -eq "m") {
         }
         $StagingDiskFreeSpace = (Get-PSDrive (Split-Path $BA2MergingStagingFolder -Qualifier).Replace(':', '')).Free
         If ($StagingDiskFreeSpace -gt $Both_ModsMergeSpaceRq) {
-            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingStagingFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingStagingFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         } Else {
-            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingStagingFolder -Qualifier), [math]::Round((($Both_ModsMergeSpaceRq - $StagingDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-            Exit
+            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingStagingFolder -Qualifier), [math]::Round((($Both_ModsMergeSpaceRq - $StagingDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+            Pause
+            Break
         }
     } ElseIf ((Split-Path $GameDataFolder -Qualifier) -ne (Split-Path $BA2MergingStagingFolder -Qualifier) -and (Split-Path $BA2MergingStagingFolder -Qualifier) -ne (Split-Path $BA2MergingTempFolder -Qualifier)) {
         If ($NewChangedModsSpaceRq -gt $OldChangedModsSpaceRq) {
@@ -1745,10 +1929,11 @@ If ($ME_Response -eq "m") {
         }
         $StagingDiskFreeSpace = (Get-PSDrive (Split-Path $BA2MergingStagingFolder -Qualifier).Replace(':', '')).Free
         If ($StagingDiskFreeSpace -gt $Staging_ModsMergeSpaceRq) {
-            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingStagingFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingStagingFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         } Else {
-            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingStagingFolder -Qualifier), [math]::Round((($Staging_ModsMergeSpaceRq - $StagingDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-            Exit
+            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingStagingFolder -Qualifier), [math]::Round((($Staging_ModsMergeSpaceRq - $StagingDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+            Pause
+            Break
         }
         If ($NewChangedModsSpaceRq -gt $OldChangedModsSpaceRq) {
             $Temp_ModsMergeSpaceRq = ($NewModsSpaceRq + $NewChangedModsSpaceRq) * 1 * 1.3
@@ -1757,24 +1942,25 @@ If ($ME_Response -eq "m") {
         }
         $TempDiskFreeSpace = (Get-PSDrive (Split-Path $BA2MergingTempFolder -Qualifier).Replace(':', '')).Free
         If ($TempDiskFreeSpace -gt $Temp_ModsMergeSpaceRq) {
-            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingTempFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("BMAT checked and there should be sufficient space on disk `"{0}`" to proceed with the current merge." -f (Split-Path $BA2MergingTempFolder -Qualifier)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
         } Else {
-            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingTempFolder -Qualifier), [math]::Round((($Temp_ModsMergeSpaceRq - $TempDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
-            Exit
+            Write-HostAndLog -Message ("BMAT checked and there is no sufficient space on disk `"{0}`" to proceed with the current merge. Additional {1} GB of free space is required." -f ((Split-Path $BA2MergingTempFolder -Qualifier), [math]::Round((($Temp_ModsMergeSpaceRq - $TempDiskFreeSpace) / [Math]::Pow(1024, 3)), 2))) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
+            Pause
+            Break
         }
     }
 
     # Cleaning up and mod files restoration to game folder where required
-    Write-HostAndLog -Message "Initiating clean-up and repackaging stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Initiating clean-up and repackaging stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     $BA2RepackageCandidates = $ModsChangeTracker | Where-Object { $_.BA2_Re_Merge -eq $true }
     If ($BA2RepackageTracker) {
         ForEach ($MergeFile in ($BA2RepackageCandidates | Group-Object -Property In_BA2)) {
-            Write-HostAndLog -Message ("Starting working on `"{0}`" merge file" -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("Starting working on `"{0}`" merge file" -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             If ($MergeFile.Group | Where-Object { $_.Status -eq "Updated_Changed" }) {
                 ForEach ($ModFile in ($MergeFile.Group | Where-Object { $_.Status -eq "Updated_Changed" })) {
                     $OldMod = $BA2RepackageTracker | Where-Object { $_.Mod_Name -eq $ModFile.Mod_Name -and $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }
                     $NewMod = $FullModList | Where-Object { $_.Mod_Name -eq $ModFile.Updated_By }
-                    Write-HostAndLog -Message ("Mod `"{0}`" was updated or changed. Removing mod files from BMAT staging folder. Merge file `"{1}`" will be repackaged." -f ($OldMod.Mod_Name, $MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Mod `"{0}`" was updated or changed. Removing mod files from BMAT staging folder. Merge file `"{1}`" will be repackaged." -f ($OldMod.Mod_Name, $MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     $OldModFilePath = Join-Path -Path $OldMod.Mod_Target_Path -ChildPath $OldMod.Mod_BA2_File
                     IF (Test-Path -LiteralPath $OldModFilePath) {
                         Try {
@@ -1782,10 +1968,10 @@ If ($ME_Response -eq "m") {
                             Remove-Item -LiteralPath $OldModFilePath -Recurse -ErrorAction Stop
                             $ProgressPreference = 'Continue'
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" was already removed." -f ($OldModFilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message ("File `"{0}`" was already removed." -f ($OldModFilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     $OldModInTracker = ($ModsChangeTracker | Where-Object { $_.Mod_Name -eq $OldMod.Mod_Name -and $_.Mod_BA2_File -eq $OldMod.Mod_BA2_File })
                     $TrackerUpdateForModUpdate = @()
@@ -1799,7 +1985,7 @@ If ($ME_Response -eq "m") {
                     $TrackerUpdateForModUpdate += New-Object PSObject -prop @{ "Old Value" = ("Modified: `"{0}`"") -f ($OldModInTracker.Modified.ToString()); "New Value" = ("Modified: `"{0}`"") -f (($NewMod.BA2_Files_Details | Where-Object { $_.Name -eq $ModFile.Mod_BA2_File }).Modified.ToString()); }
                     $TrackerUpdateForModUpdate += New-Object PSObject -prop @{ "Old Value" = ("Size: `"{0}`"") -f ($OldModInTracker.Size); "New Value" = ("Size: `"{0}`"") -f (($NewMod.BA2_Files_Details | Where-Object { $_.Name -eq $ModFile.Mod_BA2_File }).Size_Bytes); }
                     $TrackerUpdateForModUpdate += New-Object PSObject -prop @{ "Old Value" = ("Plugin_Mod: `"{0}`"") -f ($OldModInTracker.Plugin_Mod); "New Value" = ("Plugin_Mod: `"{0}`"") -f (($NewMod.BA2_Files_Details | Where-Object { $_.Name -eq $ModFile.Mod_BA2_File }).Plugin_Mod); }
-                    Write-HostAndLog -Message ("Updating change tracker for file `"{0}`" with the new mod `"{1}`" details:`n{2}" -f ($ModFile.Mod_BA2_File, $NewMod.Mod_Name, ($TrackerUpdateForModUpdate | Format-Table -Wrap | Out-String))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Updating change tracker for file `"{0}`" with the new mod `"{1}`" details:`n{2}" -f ($ModFile.Mod_BA2_File, $NewMod.Mod_Name, ($TrackerUpdateForModUpdate | Format-Table -Wrap | Out-String))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     $OldModInTracker.Mod_Display_Name = $NewMod.Mod_Display_Name
                     $OldModInTracker.Mod_Name = $NewMod.Mod_Name
                     $OldModInTracker.Mod_Source_Path = $NewMod.Mod_Source_Path
@@ -1815,7 +2001,7 @@ If ($ME_Response -eq "m") {
                 ForEach ($ModFile in ($MergeFile.Group | Where-Object { $_.Status -eq "Removed_from_Game" })) {
                     If ($null -eq ($FullModList | Where-Object { $_.Mod_Name -eq $ModFile.Mod_Name })) {
                         $ModFileDetails = $BA2RepackageTracker | Where-Object { $_.Mod_Name -eq $ModFile.Mod_Name -and $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }
-                        Write-HostAndLog -Message ("Mod `"{0}`" was removed from game. Removing mod files from BMAT staging folder. Merge file `"{1}`" will be repackaged." -f ($ModFile.Mod_Name, $MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message ("Mod `"{0}`" was removed from game. Removing mod files from BMAT staging folder. Merge file `"{1}`" will be repackaged." -f ($ModFile.Mod_Name, $MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                         $ToBeRemovedFilePath = = Join-Path -Path $ModFile.Mod_Target_Path -ChildPath $ModFile.Mod_BA2_File
                         IF (Test-Path -LiteralPath $ToBeRemovedFilePath) {
                             Try {
@@ -1823,16 +2009,16 @@ If ($ME_Response -eq "m") {
                                 Remove-Item -LiteralPath $ToBeRemovedFilePath -Recurse -Force -Confirm:$false -ErrorAction Stop
                                 $ProgressPreference = 'Continue'
                             } Catch {
-                                Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                             }
                         } Else {
-                            Write-HostAndLog -Message ("File `"{0}`" was already removed." -f ($ToBeRemovedFilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message ("File `"{0}`" was already removed." -f ($ToBeRemovedFilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     }
                 }
             } ElseIf ($MergeFile.Group | Where-Object { $_.Status -eq "Removed_from_Mod" }) {
                 ForEach ($ModFile in ($MergeFile.Group | Where-Object { $_.Status -eq "Removed_from_Mod" })) {
-                    Write-HostAndLog -Message ("Removing mod `"{0}`" files from mod repackage folder `"{1}`"." -f ($ModFile.Mod_Display_Name, $ModFile.Mod_Target_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Removing mod `"{0}`" files from mod repackage folder `"{1}`"." -f ($ModFile.Mod_Display_Name, $ModFile.Mod_Target_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     $FilePath = Join-Path -Path $ModFile.Mod_Target_Path -ChildPath $ModFile.Mod_BA2_File
                     IF (Test-Path -LiteralPath $FilePath) {
                         Try {
@@ -1840,14 +2026,14 @@ If ($ME_Response -eq "m") {
                             Remove-Item -LiteralPath $FilePath -Recurse -ErrorAction Stop
                             $ProgressPreference = 'Continue'
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" was already removed." -f ($FilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message ("File `"{0}`" was already removed." -f ($FilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
             } Else {
-                Write-HostAndLog -Message ("Merge file `"{0}`" will be repackaged as one or more of the mods files in it had changed or a new mod files are to be added." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Merge file `"{0}`" will be repackaged as one or more of the mods files in it had changed or a new mod files are to be added." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             }
         }
     }
@@ -1886,7 +2072,7 @@ If ($ME_Response -eq "m") {
         $L1Counter = 1
         ForEach ($MergeFile in $MergeGroupCandidates) {
             #$MergeFile = $MergeGroupCandidates[1]
-            Write-HostAndLog -Message ("Starting processing group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("Starting processing group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             Write-Progress -Id 0 -Activity "Processing BA2 Merge Groups..." -Status ('    {0}% complete' -f ([math]::Round((($L1Counter / ($MergeGroupCandidates | Measure-Object).Count) * 100)))) -PercentComplete $(($L1Counter / ($MergeGroupCandidates | Measure-Object).Count) * 100)
             $L1Counter++
             $L2Counter = 1
@@ -1911,86 +2097,86 @@ If ($ME_Response -eq "m") {
 
                 # Creating mods folders in the staging
                 IF (Test-Path -LiteralPath $ModFile.Mod_Target_Path) {
-                    Write-HostAndLog -Message ("Mod specific staging working folder found `"{0}`"." -f ($ModFile.Mod_Target_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Mod specific staging working folder found `"{0}`"." -f ($ModFile.Mod_Target_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 } Else {
-                    Write-HostAndLog -Message ("Creating mod specific staging working folder `"{0}`"." -f ($ModFile.Mod_Target_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Creating mod specific staging working folder `"{0}`"." -f ($ModFile.Mod_Target_Path)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     Try {
                         New-Item -Path $ModFile.Mod_Target_Path -ItemType Directory -ErrorAction Stop
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
-                Write-HostAndLog -Message ("Processing file `"{0}`" part of mod `"{1}`"." -f ($ModFile.Mod_BA2_File, $ModFile.Mod_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Processing file `"{0}`" part of mod `"{1}`"." -f ($ModFile.Mod_BA2_File, $ModFile.Mod_Display_Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
 
                 # Moving BA2 files to staging
                 # New mod to BMAT, file not in source place, but file is in target place
                 If (($ModFile.Status -eq "New_Candidate") -and -not (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) {
-                    Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     # Mod file source and target paths are the same, and file path exists
                 } ElseIf (($ModFile.Mod_Source_Path -eq $ModFile.Mod_Target_Path) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) {
-                    Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     # If the ba2 file exist in both source and target and if their modify dates match
                 } ElseIf (((Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File) -ErrorAction SilentlyContinue)) -and ($ModFile.Modified -eq ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_BA2_Modified)) {
-                    Write-HostAndLog -Message ("File `"{0}`" found in the game folder as well as in the BMAT repackaging staging folder. The mod file in game folder will be removed." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("File `"{0}`" found in the game folder as well as in the BMAT repackaging staging folder. The mod file in game folder will be removed." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     Try {
                         $ProgressPreference = 'SilentlyContinue'
                         Remove-Item -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     # If the file path from tracker does not exist and the file from the full list i.e. the updated/replaced file exist in source
                 } ElseIf ($BA2RepackageTracker -and -not (Test-Path -LiteralPath (($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) -and (Test-Path -Path ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) {
-                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     If (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) {
                         Try {
                             Move-Item -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     # If BA2 files names between the one in the full list and the one in the tracker list match, but their modify dates are different
                 } ElseIf (($ModFile.Mod_BA2_File -eq ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_BA2_File) -and ($ModFile.Modified -ne ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_BA2_Modified)) {
-                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f ((($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f ((($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     If (Test-Path -LiteralPath (($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) {
                         Try {
                             Move-Item -LiteralPath (($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f ((($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f ((($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     # If file not in source place, but file is in target place
                 } ElseIf (-not (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) {
-                    Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 } Else {
-                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     If (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) {
                         Try {
                             Move-Item -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
 
                 # Extracting ba2 files to work folder
                 If (($FileExtrackTracker | Where-Object { $_.Mod_Name -eq $ModDetails.Mod_Name -and $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Extracted -eq $True) {
-                    Write-HostAndLog -Message ("File `"{0}`" has already been extracted. Skipping..." -f (($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("File `"{0}`" has already been extracted. Skipping..." -f (($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 } Else {
-                    Write-HostAndLog -Message ("Extracting file `"{0}`"." -f (($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("Extracting file `"{0}`"." -f (($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     Try {
                         $Output = Invoke-Expression -Command "& `"$BSArchPath`" unpack `"$($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File)`" `"$CleanUpFolder`" 2>&1" -ErrorAction Stop
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     If ($Output -match "exception") {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($Output | Out-String)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($Output | Out-String)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     If ($null -ne ($FileExtrackTracker | Where-Object { $_.Mod_Name -eq $ModFile.Mod_Name -and $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File })) {
                         ($FileExtrackTracker | Where-Object { $_.Mod_Name -eq $ModFile.Mod_Name -and $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Extracted = $True
@@ -1998,7 +2184,7 @@ If ($ME_Response -eq "m") {
                     Try {
                         Add-Content -Path $LogFilePath -Value ("{0} - {1}: Extracting command output:`n{2}" -f ($(Get-Date), 'INFO', ($Output | Out-String)))
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
 
@@ -2018,7 +2204,7 @@ If ($ME_Response -eq "m") {
                 Try {
                     $BA2Folders = Get-ChildItem -LiteralPath $CleanUpFolder -Directory -ErrorAction Stop | Where-Object { (Get-ChildItem -LiteralPath $_ -Recurse).FullName -match $AllLooseFolderInclusiveRegex }
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
                 ForEach ($Folder in $BA2Folders) {
                     $BA2MainFoldersSubfolders = @()
@@ -2062,18 +2248,18 @@ If ($ME_Response -eq "m") {
                                         Remove-Item -LiteralPath $DestinationFile -Recurse -Force -ErrorAction Stop
                                         $ProgressPreference = 'Continue'
                                     } Catch {
-                                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                                     }
                                 }
                                 Try {
                                     $null = New-Item -Path  $DestinationFolderPath -Type Directory -Force
                                 } Catch {
-                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                                 }
                                 Try {
                                     Copy-Item -LiteralPath $File.FullName -Destination $DestinationFolderPath -Force
                                 } Catch {
-                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                                 }
                             }
                         }
@@ -2083,7 +2269,7 @@ If ($ME_Response -eq "m") {
                             $FilesList = Get-ChildItem -LiteralPath $SubFolder.FullName -File -Recurse | Where-Object { $_.Extension -eq '.dds' }
                             $ExcludedTexturesFiles = Get-ChildItem -LiteralPath $SubFolder.FullName -File -Recurse | Where-Object { $_.Extension -ne '.dds' }
                             If ($null -ne $ExcludedTexturesFiles) {
-                                Write-HostAndLog -Message ("The following files will be skipped from the Textures BA2 merge as non DDS files:`n{0}" -f ($ExcludedTexturesFiles.FullName | Out-String)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                Write-HostAndLog -Message ("The following files will be skipped from the Textures BA2 merge as non DDS files:`n{0}" -f ($ExcludedTexturesFiles.FullName | Out-String)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                             }
                             $SourceFolder = $SubFolder.Parent.FullName
                             $DestinationFolder = $TemporaryTexturesFolder
@@ -2101,18 +2287,18 @@ If ($ME_Response -eq "m") {
                                         Remove-Item -LiteralPath $DestinationFile -Recurse -Force -ErrorAction Stop
                                         $ProgressPreference = 'Continue'
                                     } Catch {
-                                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                                     }
                                 }
                                 Try {
                                     $null = New-Item -Path  $DestinationFolderPath -Type Directory -Force
                                 } Catch {
-                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                                 }
                                 Try {
                                     Copy-Item -LiteralPath $File.FullName -Destination $DestinationFolderPath -Force
                                 } Catch {
-                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                                 }
                             }
                         }
@@ -2124,7 +2310,7 @@ If ($ME_Response -eq "m") {
                         Remove-Item -LiteralPath $Folder.FullName -Recurse -Force -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
             }
@@ -2132,13 +2318,13 @@ If ($ME_Response -eq "m") {
             # Creating plugin for the respective group
             $PluginFilePath = Join-Path -Path $OutputWorkingFolder -ChildPath ("{0}.esp" -f ($MergeFile.Name))
             IF (Test-Path -LiteralPath $PluginFilePath) {
-                Write-HostAndLog -Message ("File `"{0}`" already exists. Skipping step." -f ($PluginFilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("File `"{0}`" already exists. Skipping step." -f ($PluginFilePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             } ELSE {
-                Write-HostAndLog -Message ("Creating file `"{0}`.esp`" in output folder." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Creating file `"{0}`.esp`" in output folder." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Try {
-                    Copy-Item -LiteralPath (Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath $EmptyESPFileName) -Destination $PluginFilePath -ErrorAction Stop
+                    Set-EmptyESPPlugin -Path $OutputWorkingFolder -Name ("{0}.esp" -f ($MergeFile.Name))
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
             }
 
@@ -2164,46 +2350,46 @@ If ($ME_Response -eq "m") {
 
             # Archiving the Textures ba2 files
             IF ((Get-ChildItem -LiteralPath $TemporaryTexturesFolder | Measure-Object).Count -gt 0) {
-                Write-HostAndLog -Message "Moving the cleaned Textures ba2 type folders to temp." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "Moving the cleaned Textures ba2 type folders to temp." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $TempTexturesFolders = Get-ChildItem -LiteralPath $TemporaryTexturesFolder
                 ForEach ($Folder in $TempTexturesFolders) {
                     If ($Folder.Name -match $TexturesLooseFolderRegex) {
                         Try {
                             Move-Item -LiteralPath $Folder.FullName -Destination $TemporaryWorkingFolder -Force -Confirm:$false -ErrorAction Stop
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
                         Try {
                             Copy-Item -LiteralPath $Folder.FullName -Destination $TemporaryMainFolder -Recurse -Container -Force -ErrorAction Stop
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                         Try {
                             $ProgressPreference = 'SilentlyContinue'
                             Remove-Item -LiteralPath $Folder.FullName -Recurse -Force -ErrorAction Stop
                             $ProgressPreference = 'Continue'
                         } Catch {
-                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     }
                 }
-                Write-HostAndLog -Message ("Archiving the Textures BA2 files for group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Archiving the Textures BA2 files for group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Try {
                     $Output = Invoke-Expression -Command "& `"$BSArchPath`" pack `"$TemporaryWorkingFolder`" `"$("{0}\{1} - Textures.BA2" -f ($OutputWorkingFolder,$MergeFile.Name))`" -share -fo4dds -z 2>&1" -ErrorAction Stop
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
                 Try {
                     Add-Content -Path $LogFilePath -Value ("{0} - {1}: Archiving command output:`n{2}" -f ($(Get-Date), 'INFO', ($Output | Out-String)))
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
                 If ($Output -match "exception") {
                     $DDSIssueFiles = $TotalDSSForCleanUp | Where-Object { $Output -match ([regex]::Escape($($_.File_Path.Replace($CleanUpFolder, '')))) }
-                    Write-HostAndLog -Message ("There was an issue with mod `"{0}`" during BA2 merge! The affected files was `"{1}`"" -f ($DDSIssueFiles.Mod_Name, $DDSIssueFiles.File_Path)) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message ("There was an issue with mod `"{0}`" during BA2 merge! The affected files was `"{1}`"" -f ($DDSIssueFiles.Mod_Name, $DDSIssueFiles.File_Path)) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
-                Write-HostAndLog -Message "Cleaning up temp folders." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "Cleaning up temp folders." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $TempWorkingFolderList = Get-ChildItem -LiteralPath $("{0}" -f ($TemporaryWorkingFolder))
                 ForEach ($Item in $TempWorkingFolderList) {
                     Try {
@@ -2211,7 +2397,7 @@ If ($ME_Response -eq "m") {
                         Remove-Item -LiteralPath $Item.FullName -Recurse -Force -Confirm:$false -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
                 $TempTexturesFolderList = Get-ChildItem -LiteralPath $("{0}" -f ($TemporaryTexturesFolder)) -Recurse
@@ -2221,37 +2407,37 @@ If ($ME_Response -eq "m") {
                         Remove-Item -LiteralPath $Item.FullName -Recurse -Force -Confirm:$false -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
             } Else {
-                Write-HostAndLog -Message "There aren't any BA2 Textures files in staging suitable to be archived." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "There aren't any BA2 Textures files in staging suitable to be archived." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             }
 
             # Archiving the main ba2 files
             IF ((Get-ChildItem -LiteralPath $TemporaryMainFolder | Measure-Object).Count -gt 0) {
-                Write-HostAndLog -Message "Moving the cleaned Main ba2 type folders to temp." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "Moving the cleaned Main ba2 type folders to temp." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $TempMainFolders = Get-ChildItem -LiteralPath $TemporaryMainFolder
                 ForEach ($Folder in $TempMainFolders) {
                     Try {
                         Move-Item -LiteralPath $Folder.FullName -Destination $TemporaryWorkingFolder -Force -Confirm:$false -ErrorAction Stop
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
-                Write-HostAndLog -Message ("Archiving the Main BA2 files for group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Archiving the Main BA2 files for group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Try {
                     $Output = Invoke-Expression -Command "& `"$BSArchPath`" pack `"$TemporaryWorkingFolder`" `"$("{0}\{1} - Main.BA2" -f ($OutputWorkingFolder,$MergeFile.Name))`" -share -fo4 2>&1" -ErrorAction Stop
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
                 Try {
                     Add-Content -Path $LogFilePath -Value ("{0} - {1}: Archiving command output:`n{2}" -f ($(Get-Date), 'INFO', ($Output | Out-String)))
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
 
-                Write-HostAndLog -Message "Cleaning up temp folders." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "Cleaning up temp folders." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 $TempWorkingFolderList = Get-ChildItem -LiteralPath $("{0}" -f ($TemporaryWorkingFolder))
                 ForEach ($Item in $TempWorkingFolderList) {
                     Try {
@@ -2259,7 +2445,7 @@ If ($ME_Response -eq "m") {
                         Remove-Item -LiteralPath $Item.FullName -Recurse -Force -Confirm:$false -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
                 $TempMainFolderList = Get-ChildItem -LiteralPath $("{0}" -f ($TemporaryMainFolder)) -Recurse
@@ -2269,34 +2455,34 @@ If ($ME_Response -eq "m") {
                         Remove-Item -LiteralPath $Item.FullName -Recurse -Force -Confirm:$false -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
-                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                        Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
             } Else {
-                Write-HostAndLog -Message "There aren't any BA2 Main files in staging suitable to be archived." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "There aren't any BA2 Main files in staging suitable to be archived." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             }
 
-            # Adding BA2 files and plugin files to a new mod
+            # Adding BA2 files and plugin files to a new mod zip archive
             IF (Get-ChildItem -LiteralPath $OutputWorkingFolder) {
                 $ProcessedFiles = Get-ChildItem -LiteralPath $BA2MergingStagingFolder -Recurse | Where-Object { $_.Extension -eq ".ba2" }
                 $MergedFiles = Get-ChildItem -LiteralPath $OutputWorkingFolder | Where-Object { $_.Extension -eq ".ba2" }
                 $ModZipPath = Join-Path -Path $OutputWorkingFolder -ChildPath "$BA2MergedModName.zip"
-                Write-HostAndLog -Message ("Combining the BA2 files and plugin files into a new mod zip file `"{0}`"." -f ($ModZipPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Combining the BA2 files and plugin files into a new mod zip file `"{0}`"." -f ($ModZipPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Try {
                     Compress-Archive -Path "$OutputWorkingFolder\*" -DestinationPath $ModZipPath -CompressionLevel NoCompression | Out-Null
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
                 Try {
                     $ProgressPreference = 'SilentlyContinue'
                     Get-ChildItem -Path $OutputWorkingFolder -Exclude "$BA2MergedModName.zip" | Remove-Item -Force
                     $ProgressPreference = 'Continue'
                 } Catch {
-                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                    Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
                 Get-MessageWindow -Title "Install BMAT merged mod" -Message ("To complete the BMAT merge process install the newly created by BMAT mod '{0}' file using your mod manager Vortex or MO2.`n The new mod file can be found in '{1}'" -f ("$BA2MergedModName.zip", $OutputWorkingFolder)) -Category Information | Out-Null
             } Else {
-                Write-HostAndLog -Message "There aren't any BA2 merged files or plugin files in staging to be added to the mod manager." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "There aren't any BA2 merged files or plugin files in staging to be added to the mod manager." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             }
         }
 
@@ -2304,25 +2490,25 @@ If ($ME_Response -eq "m") {
         $TotalProcessedModFilesRawUnique = ($TotalProcessedModFilesRaw | ForEach-Object { $_.File_Path.Replace($CleanUpFolder, '') }) | Sort-Object -Unique
         $TotalProcessedModFilesPreArchUnique = ($TotalProcessedModFilesPreArch | ForEach-Object { $_.File_Path -Replace ("($($TemporaryMainFolder.Replace('\','\\'))|$($TemporaryTexturesFolder.Replace('\','\\')))", '') }) | Sort-Object -Unique
         If ($TotalProcessedModFilesRawUnique.Count -ne $TotalProcessedModFilesPreArchUnique.Count) {
-            Write-HostAndLog -Message ("There were {0} mods content files post BA2 files extract and loose files preparation and {1} mods content files just before BA2 compression." -f ($TotalProcessedModFilesRawUnique.Count, $TotalProcessedModFilesPreArchUnique.Count)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("There were {0} mods content files post BA2 files extract and loose files preparation and {1} mods content files just before BA2 compression." -f ($TotalProcessedModFilesRawUnique.Count, $TotalProcessedModFilesPreArchUnique.Count)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
             $MissingFiles = Compare-Object $TotalProcessedModFilesRawUnique $TotalProcessedModFilesPreArchUnique | Where-Object { $_.SideIndicator -eq '<=' } | Select-Object -ExpandProperty InputObject
-            Write-HostAndLog -Message ("The delta files are:`n{0}" -f ($MissingFiles | Out-String)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("The delta files are:`n{0}" -f ($MissingFiles | Out-String)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
         }
     }
 
     # Updating repackage register
-    Write-HostAndLog -Message "Updating repackage tracker." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+    Write-HostAndLog -Message "Updating repackage tracker." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     IF ($ModsChangeTracker) {
         # Checking BMAT tracker file is not opened
         #If (Test-Path -LiteralPath $MergedFilesTrackerFolder -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
         If (Test-Path -LiteralPath $TrackerFolder) {
             Set-FileClosed -FileNamePath $MergedFilesTrackerPath -FileDescription 'BMAT tracker file' -BMATFolder $BMATFolder
         } Else {
-            Write-HostAndLog -Message ("Creating BMAT tracker folder `"{0}`"" -f ($TrackerFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message ("Creating BMAT tracker folder `"{0}`"" -f ($TrackerFolder)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             Try {
                 New-Item -Path $TrackerFolder -ItemType Directory -ErrorAction Stop
             } Catch {
-                Write-HostAndLog -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
             }
         }
         $BackupTrackerName = "{0}-{1}.csv" -f (($MergedFilesTrackerName -split ("\."))[0], (Get-Date -UFormat "%d-%m-%Y-%H-%M-%S"))
@@ -2338,13 +2524,13 @@ If ($ME_Response -eq "m") {
             Try {
                 Rename-Item -Path $MergedFilesTrackerPath -NewName $BackupTrackerName -ErrorAction Stop
             } Catch {
-                Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
             }
         }
         $TrackerUpdate = @()
         ForEach ($File in ($ModsChangeTracker | Where-Object { $_.Status -ne "Removed_from_Game" -and $_.Status -ne "Removed_from_Mod" })) {
             If ($null -ne ($TrackerUpdate | Where-Object { $_.Mod_Name -eq $File.Mod_Name -and ($File.Mod_BA2_File -ne $null -and $_.Mod_BA2_File -eq $File.Mod_BA2_File) })) {
-                Write-HostAndLog -Message ("Duplicate record attempt for mod `"{0}`" and BA2 file: `"{1}`". Skipping..." -f ($File.Mod_Name, $File.Mod_BA2_File)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+                Write-HostAndLog -Message ("Duplicate record attempt for mod `"{0}`" and BA2 file: `"{1}`". Skipping..." -f ($File.Mod_Name, $File.Mod_BA2_File)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
             } Else {
                 IF ((($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name }).Collections | Measure-Object).Count -gt 1) {
                     $ModCollectionsTracker = ($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name }).Collections -join "; "
@@ -2386,12 +2572,22 @@ If ($ME_Response -eq "m") {
         Try {
             Add-Content -Path $LogFilePath -Value ("{0} - {1}: New tracker details are:`n{2}" -f ($(Get-Date), 'INFO', ($TrackerUpdate | ConvertTo-Json | Out-String)))
         } Catch {
-            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+            Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
         }
-        Write-HostAndLog -Message ("BMAT reduced {0} BA2 files down to {1} BA2 files." -f ($ProcessedFiles.Count, $MergedFiles.Count)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+        Write-HostAndLog -Message ("BMAT reduced {0} BA2 files down to {1} BA2 files." -f ($ProcessedFiles.Count, $MergedFiles.Count)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+    }
+
+    if (Test-Path $ModZipPath) {
+        & explorer.exe (Split-Path -Path $ModZipPath)
     }
 }
 $EndTime = Get-Date
 $LapsedTime = $EndTime - $StartTime
-Write-HostAndLog -Message ("It took {0} hours, {1} minutes, and {2} seconds to complete the process this time." -f ($LapsedTime.Hours, $LapsedTime.Minutes, $LapsedTime.Seconds)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $DetailedLogging
+Write-HostAndLog -Message ("It took {0} hours, {1} minutes, and {2} seconds to complete the process this time." -f ($LapsedTime.Hours, $LapsedTime.Minutes, $LapsedTime.Seconds)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+$Tip = Get-RandomTip
+If ($Tip) {
+    Write-Host "`n[TIP] $(Get-RandomTip)" -ForegroundColor Yellow
+}
+Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
+Pause
 #endregion MERGE
