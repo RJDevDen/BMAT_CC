@@ -1,0 +1,47 @@
+name: Build and Release BMAT_CC
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build EXE
+        # This builds the EXE but it will be moved manually later
+        run: dotnet publish -c Release -r win-x64 --self-contained true -o ./temp_build
+
+      - name: Assemble Folder Structure
+        shell: pwsh
+        run: |
+          # 1. Create the deep directory structure
+          $bundlePath = "staging/Data/Tools/BMAT_CC"
+          New-Item -ItemType Directory -Path "$bundlePath/BSArch" -Force
+
+          # 2. Copy the newly built EXE
+          Copy-Item -Path "./temp_build/BMAT_CC.exe" -Destination "$bundlePath/"
+
+          # 3. Copy your required BSArch tool
+          Copy-Item -Path "BSArch/BSArch.exe" -Destination "$bundlePath/BSArch/"
+
+          # 4. Zip from the 'staging' root so 'Data' is the first folder inside the zip
+          Compress-Archive -Path "staging/*" -DestinationPath "BMAT_CC_v${{ github.ref_name }}.zip"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: BMAT_CC_*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
