@@ -28,7 +28,7 @@ jobs:
         shell: pwsh
         run: |
           # 1. Get Date in DDMMYYYY format
-          $date = Get-Date -Format "ddMMv"
+          $date = Get-Date -Format "ddMMyyyy"
           
           # 2. Get Version (strips 'v' from the tag if it exists)
           $version = "${{ github.ref_name }}".TrimStart('v')
