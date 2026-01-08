@@ -20,10 +20,23 @@ namespace BMAT_CC_Host
 
                 Environment.SetEnvironmentVariable("PSHOME", psHome);
                 Environment.SetEnvironmentVariable("PSModulePath", Path.Combine(psHome, "Modules"));
+                Environment.SetEnvironmentVariable("POWERSHELL_CONFIG_PATH", psHome);
+                Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
 
+                // Ensure config file exists
+                string configFile = Path.Combine(psHome, "powershell.config.json");
+                if (!File.Exists(configFile))
+                {
+                    File.WriteAllText(configFile,
+@"{
+  ""DisableTelemetry"": true,
+  ""EnableConsoleHostTranscription"": false
+}");
+                }
                 Console.WriteLine("BaseDirectory: " + baseDir);
                 Console.WriteLine("PSHOME: " + psHome);
 
+                // Load embedded script
                 Assembly asm = Assembly.GetExecutingAssembly();
                 using Stream scriptStream =
                     asm.GetManifestResourceStream("BMAT_CC_Host.BMAT_CC.ps1")
