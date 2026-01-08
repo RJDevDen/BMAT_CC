@@ -15,6 +15,10 @@ namespace BMAT_CC_Host
                 string psHome = AppContext.BaseDirectory;
                 Environment.SetEnvironmentVariable("PSHOME", psHome);
 
+                Console.WriteLine("BaseDirectory: " + psHome);
+                Console.WriteLine("PSHOME: " + Environment.GetEnvironmentVariable("PSHOME"));
+                Console.ReadKey();
+
                 // Load embedded PowerShell script
                 var assembly = Assembly.GetExecutingAssembly();
 
@@ -30,7 +34,16 @@ namespace BMAT_CC_Host
                 string scriptContents = reader.ReadToEnd();
 
                 // Create PowerShell runspace WITHOUT snap-ins (required for single-file apps)
-                InitialSessionState iss = InitialSessionState.CreateDefault2();
+                //InitialSessionState iss = InitialSessionState.CreateDefault2();
+
+                //using Runspace runspace = RunspaceFactory.CreateRunspace(iss);
+                //runspace.Open();
+
+                // Create a minimal session state (NO snap-ins)
+                InitialSessionState iss = InitialSessionState.Create();
+
+                // Import core PowerShell module manually
+                iss.ImportPSModule(new[] { "Microsoft.PowerShell.Core" });
 
                 using Runspace runspace = RunspaceFactory.CreateRunspace(iss);
                 runspace.Open();

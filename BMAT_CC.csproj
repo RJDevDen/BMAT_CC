@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -5,31 +6,27 @@
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-
+        <PublishTrimmed>false</PublishTrimmed>
         <AssemblyName>BMAT_CC</AssemblyName>
         <RootNamespace>BMAT_CC_Host</RootNamespace>
-
-        <ProductVersion>1.0.5.0</ProductVersion>
-        <AssemblyVersion>1.0.5.0</AssemblyVersion>
-        <FileVersion>1.0.5.0</FileVersion>
-
+        <Version>1.0.6</Version>
+        <InformationalVersion>1.0.6</InformationalVersion>
+        <AssemblyVersion>1.0.6.0</AssemblyVersion>
+        <FileVersion>1.0.6.0</FileVersion>
         <Product>BMAT CC</Product>
         <FileDescription>BMAT CC</FileDescription>
         <Description>BA2 Automation Tool for CC Mods</Description>
         <Copyright>© 2025-2026 RJDevDen</Copyright>
         <Authors>RJ</Authors>
         <Company>RJDevDen</Company>
-
         <ApplicationIcon>BMAT_CC.ico</ApplicationIcon>
     </PropertyGroup>
-
     <ItemGroup>
-        <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.1" />
+        <PackageReference Include="Microsoft.PowerShell.SDK"
+                          Version="7.4.1" />
     </ItemGroup>
-
     <ItemGroup>
         <EmbeddedResource Include="BMAT_CC.ps1" />
     </ItemGroup>

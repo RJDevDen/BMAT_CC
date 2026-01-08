@@ -3,7 +3,7 @@ name: Build BMAT_CC (Draft Release)
 on:
   push:
     tags:
-      - 'v*' # Trigger by pushing a tag (e.g., git tag v1.0.0)
+      - "v*" # Trigger by pushing a tag (e.g., git tag v1.0.0)
 
 jobs:
   build:
@@ -17,11 +17,27 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
+      - name: Clean
+        run: dotnet clean
+
+      #- name: Build EXE
+      # This builds the EXE but it will be moved manually later
+      #run: dotnet publish -c Release -r win-x64 --self-contained true -o ./temp_build
       - name: Build EXE
-        # This builds the EXE but it will be moved manually later
-        run: dotnet publish -c Release -r win-x64 --self-contained true -o ./temp_build
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+
+          dotnet publish `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -o ./temp_build `
+            /p:Version=$version `
+            /p:AssemblyVersion=$version.0 `
+            /p:FileVersion=$version.0 `
+            /p:InformationalVersion=$version
 
       - name: Set Release Filename
         id: filename_step
@@ -29,13 +45,13 @@ jobs:
         run: |
           # 1. Get Date in DDMMYYYY format
           $date = Get-Date -Format "ddMMyyyy"
-          
+
           # 2. Get Version (strips 'v' from the tag if it exists)
           $version = "${{ github.ref_name }}".TrimStart('v')
-          
+
           # 3. Combine into final name
           $finalName = "BMAT_CC_${date}_${version}"
-          
+
           # 4. Save to environment for next steps
           Add-Content -Path $env:GITHUB_ENV -Value "RELEASE_NAME=$finalName"
 
