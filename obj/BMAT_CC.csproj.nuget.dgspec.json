@@ -60,10 +60,6 @@
             "Microsoft.PowerShell.SDK": {
               "target": "Package",
               "version": "[7.4.1, )"
-            },
-            "System.Management.Automation": {
-              "target": "Package",
-              "version": "[7.4.1, )"
             }
           },
           "imports": [

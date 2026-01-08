@@ -10,12 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("RJ")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("RJDevDen")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute("© 2025-2026 RJDevDen")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("BA2 Automation Tool for CC Mods")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.3.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.3+d902eaa28decc073e75e2ca0c37fbc25f324beaf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.3+12814d7faab949d0c257c57836fdeb88db2d60fc")]
 [assembly: System.Reflection.AssemblyProductAttribute("BMAT CC")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BMAT_CC")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.3.0")]

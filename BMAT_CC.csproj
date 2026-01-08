@@ -1,25 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <ApplicationIcon>BMAT_CC.ico</ApplicationIcon>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
-    <Version>1.0.3</Version>
-    <Product>BMAT CC</Product>
-    <Description>BA2 Automation Tool for CC Mods</Description>
-    <Copyright>© 2025-2026 RJDevDen</Copyright>
-    <Authors>RJ</Authors>
+        <AssemblyName>BMAT_CC</AssemblyName>
+        <RootNamespace>BMAT_CC_Host</RootNamespace>
+
+        <Version>1.0.3</Version>
+        <AssemblyVersion>1.0.3.0</AssemblyVersion>
+        <FileVersion>1.0.3.0</FileVersion>
+
+        <Product>BMAT CC</Product>
+        <Description>BA2 Automation Tool for CC Mods</Description>
+        <Copyright>© 2025-2026 RJDevDen</Copyright>
+        <Authors>RJ</Authors>
+        <Company>RJDevDen</Company>
+
+        <ApplicationIcon>BMAT_CC.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.1" />
-    <PackageReference Include="System.Management.Automation" Version="7.4.1" />
+        <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.1" />
     </ItemGroup>
 
     <ItemGroup>
-    <EmbeddedResource Include="BMAT_CC.ps1" />
+        <EmbeddedResource Include="BMAT_CC.ps1" />
     </ItemGroup>
 </Project>

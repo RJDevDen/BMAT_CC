@@ -9209,8 +9209,7 @@
   "projectFileDependencyGroups": {
     "net8.0-windows7.0": [
       "Microsoft.NET.ILLink.Tasks >= 8.0.22",
-      "Microsoft.PowerShell.SDK >= 7.4.1",
-      "System.Management.Automation >= 7.4.1"
+      "Microsoft.PowerShell.SDK >= 7.4.1"
     ]
   },
   "packageFolders": {
@@ -9271,10 +9270,6 @@
             "autoReferenced": true
           },
           "Microsoft.PowerShell.SDK": {
-            "target": "Package",
-            "version": "[7.4.1, )"
-          },
-          "System.Management.Automation": {
             "target": "Package",
             "version": "[7.4.1, )"
           }
