@@ -59,7 +59,7 @@
             },
             "Microsoft.PowerShell.SDK": {
               "target": "Package",
-              "version": "[7.4.1, )"
+              "version": "[7.5.4, )"
             }
           },
           "imports": [
