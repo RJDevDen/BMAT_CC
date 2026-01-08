@@ -5,7 +5,7 @@
   },
   "projects": {
     "Y:\\DEVELOPMENT\\DEVDEN\\Fallout4\\BMAT_CC\\BMAT_CC.csproj": {
-      "version": "1.0.0",
+      "version": "1.0.3",
       "restore": {
         "projectUniqueName": "Y:\\DEVELOPMENT\\DEVDEN\\Fallout4\\BMAT_CC\\BMAT_CC.csproj",
         "projectName": "BMAT_CC",
@@ -58,6 +58,10 @@
               "autoReferenced": true
             },
             "Microsoft.PowerShell.SDK": {
+              "target": "Package",
+              "version": "[7.4.1, )"
+            },
+            "System.Management.Automation": {
               "target": "Package",
               "version": "[7.4.1, )"
             }
