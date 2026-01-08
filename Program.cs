@@ -38,15 +38,6 @@ namespace BMAT_CC_Host
                 using Runspace runspace = RunspaceFactory.CreateRunspace(iss);
                 runspace.Open();
 
-                // Create a minimal session state (NO snap-ins)
-                //InitialSessionState iss = InitialSessionState.Create();
-
-                // Import core PowerShell module manually
-                //iss.ImportPSModule(new[] { "Microsoft.PowerShell.Core" });
-
-                //using Runspace runspace = RunspaceFactory.CreateRunspace(iss);
-                // runspace.Open();
-
                 using PowerShell ps = PowerShell.Create();
                 ps.Runspace = runspace;
 

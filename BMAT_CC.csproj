@@ -6,10 +6,7 @@
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-        <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
-        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <PublishTrimmed>false</PublishTrimmed>
-        <PreserveCompilationContext>true</PreserveCompilationContext>
 
         <AssemblyName>BMAT_CC</AssemblyName>
         <RootNamespace>BMAT_CC_Host</RootNamespace>
