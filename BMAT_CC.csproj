@@ -11,10 +11,10 @@
         <PublishTrimmed>false</PublishTrimmed>
         <AssemblyName>BMAT_CC</AssemblyName>
         <RootNamespace>BMAT_CC_Host</RootNamespace>
-        <Version>1.0.6</Version>
-        <InformationalVersion>1.0.6</InformationalVersion>
-        <AssemblyVersion>1.0.6.0</AssemblyVersion>
-        <FileVersion>1.0.6.0</FileVersion>
+        <Version>1.0.7</Version>
+        <InformationalVersion>1.0.7</InformationalVersion>
+        <AssemblyVersion>1.0.7.0</AssemblyVersion>
+        <FileVersion>1.0.7.0</FileVersion>
         <Product>BMAT CC</Product>
         <FileDescription>BMAT CC</FileDescription>
         <Description>BA2 Automation Tool for CC Mods</Description>

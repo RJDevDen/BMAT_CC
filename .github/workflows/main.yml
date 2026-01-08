@@ -14,13 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clean
+        run: dotnet clean
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-
-      - name: Clean
-        run: dotnet clean
 
       #- name: Build EXE
       # This builds the EXE but it will be moved manually later
