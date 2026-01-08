@@ -49,18 +49,35 @@ jobs:
           # 4. Save to environment for next steps
           Add-Content -Path $env:GITHUB_ENV -Value "RELEASE_NAME=$finalName"
 
+      - name: Download PowerShell 7.5.4 Runtime
+        shell: pwsh
+        run: |
+          $psZipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.5.4/PowerShell-7.5.4-win-x64.zip"
+          $zipFile = "./temp_build/pwsh.zip"
+          Invoke-WebRequest -Uri $psZipUrl -OutFile $zipFile
+
+          # Extract the zip into Bin folder next to exe
+          $binPath = "./temp_build/Bin"
+          Expand-Archive -Path $zipFile -DestinationPath $binPath -Force
+
+          # Remove the zip file to save space
+          Remove-Item $zipFile
+
       - name: Assemble Folder Structure
         shell: pwsh
         run: |
-          # 1. Create the deep directory structure for the mod zip
+          # Create the deep directory structure for the mod zip
           $bundlePath = "staging/Data/Tools/BMAT_CC"
           New-Item -ItemType Directory -Path "$bundlePath/BSArch" -Force
 
-          # 2. Copy the newly built EXE
+          # Copy the newly built EXE
           Copy-Item -Path "./temp_build/BMAT_CC.exe" -Destination "$bundlePath/"
 
-          # 3. Copy the required BSArch tool
+          # Copy the required BSArch tool
           Copy-Item -Path "BSArch/BSArch.exe" -Destination "$bundlePath/BSArch/"
+
+          # Copy PowerShell runtime (Bin)
+          Copy-Item "./temp_build/Bin" "$bundlePath/" -Recurse -Force
 
           # 4. Zip from the 'staging' root so 'Data' is the first folder inside the zip
           Compress-Archive -Path "staging/*" -DestinationPath "${{ env.RELEASE_NAME }}.zip"

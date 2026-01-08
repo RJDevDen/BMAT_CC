@@ -12,42 +12,35 @@ namespace BMAT_CC_Host
         {
             try
             {
-                // 1️⃣ Determine exe folder
-                string exeDir = AppContext.BaseDirectory;
-                string binPath = Path.Combine(exeDir, "Bin");
+                string baseDir = AppContext.BaseDirectory;
+                string psHome = Path.Combine(baseDir, "Bin");
 
-                // 2️⃣ Create Bin folder if it doesn't exist
-                Directory.CreateDirectory(binPath);
+                Environment.SetEnvironmentVariable("PSHOME", psHome);
+                Environment.SetEnvironmentVariable("PSModulePath", Path.Combine(psHome, "Modules"));
 
-                // 3️⃣ Extract embedded PowerShell runtime files (DLLs, Modules)
-                ExtractEmbeddedResources(binPath);
+                Console.WriteLine("BaseDirectory: " + baseDir);
+                Console.WriteLine("PSHOME: " + psHome);
 
-                // 4️⃣ Set PSHOME to Bin folder
-                Environment.SetEnvironmentVariable("PSHOME", binPath);
-
-                Console.WriteLine("BaseDirectory: " + exeDir);
-                Console.WriteLine("PSHOME: " + Environment.GetEnvironmentVariable("PSHOME"));
-
-                // 5️⃣ Load embedded PowerShell script
+                // Load embedded PowerShell script
                 string scriptContents = LoadEmbeddedScript("BMAT_CC_Host.BMAT_CC.ps1");
 
-                // 6️⃣ Create a runspace with full language support
+                // Create a runspace with full language support
                 InitialSessionState iss = InitialSessionState.CreateDefault2();
                 using Runspace runspace = RunspaceFactory.CreateRunspace(iss);
                 runspace.Open();
 
-                // 7️⃣ Create PowerShell instance and assign runspace
+                // Create PowerShell instance and assign runspace
                 using PowerShell ps = PowerShell.Create();
                 ps.Runspace = runspace;
 
-                // 8️⃣ Add script and pass command-line arguments
+                // Add script and pass command-line arguments
                 ps.AddScript(scriptContents);
                 ps.AddParameter("Args", args);
 
-                // 9️⃣ Invoke the script
+                // Invoke the script
                 ps.Invoke();
 
-                // 10️⃣ Check for errors
+                // Check for errors
                 if (ps.HadErrors)
                 {
                     Console.Error.WriteLine("PowerShell execution failed:");
