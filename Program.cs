@@ -12,62 +12,43 @@ namespace BMAT_CC_Host
         {
             try
             {
-                string baseDir = AppContext.BaseDirectory;
+                //string baseDir = AppContext.BaseDirectory;
+                string baseDir = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
                 string psHome = Path.Combine(baseDir, "Bin");
 
                 if (!Directory.Exists(psHome))
-                    throw new DirectoryNotFoundException($"PSHOME not found: {psHome}");
+                    throw new DirectoryNotFoundException($"PowerShell home not found: {psHome}");
 
                 Environment.SetEnvironmentVariable("PSHOME", psHome);
-                Environment.SetEnvironmentVariable("PSModulePath", Path.Combine(psHome, "Modules"));
-                Environment.SetEnvironmentVariable("POWERSHELL_CONFIG_PATH", psHome);
-                Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", "1");
+                Environment.SetEnvironmentVariable(
+                    "PSModulePath",
+                    Path.Combine(psHome, "Modules"),
+                    EnvironmentVariableTarget.Process
+                );
 
-                // Ensure config file exists
-                string configFile = Path.Combine(psHome, "powershell.config.json");
-                if (!File.Exists(configFile))
-                {
-                    File.WriteAllText(configFile,
-@"{
-  ""DisableTelemetry"": true,
-  ""EnableConsoleHostTranscription"": false
-}");
-                }
                 Console.WriteLine("BaseDirectory: " + baseDir);
                 Console.WriteLine("PSHOME: " + psHome);
 
                 // Load embedded script
                 Assembly asm = Assembly.GetExecutingAssembly();
+                const string scriptResource = "BMAT_CC_Host.BMAT_CC.ps1";
+
                 using Stream scriptStream =
-                    asm.GetManifestResourceStream("BMAT_CC_Host.BMAT_CC.ps1")
-                    ?? throw new InvalidOperationException("Embedded script not found");
+                    asm.GetManifestResourceStream(scriptResource)
+                    ?? throw new InvalidOperationException($"Embedded script not found: {scriptResource}");
 
                 using StreamReader reader = new StreamReader(scriptStream);
                 string script = reader.ReadToEnd();
 
-                InitialSessionState iss = InitialSessionState.Create();
-
-                // Explicitly import built-in modules
-                iss.ImportPSModule(new[]
-                {
-                    "Microsoft.PowerShell.Management",
-                    "Microsoft.PowerShell.Utility",
-                    "Microsoft.PowerShell.Security",
-                    "Microsoft.PowerShell.Archive"
-                });
-
+                InitialSessionState iss = InitialSessionState.CreateDefault2();
                 using Runspace runspace = RunspaceFactory.CreateRunspace(iss);
                 runspace.Open();
 
                 // Create PowerShell instance and assign runspace
                 using PowerShell ps = PowerShell.Create();
                 ps.Runspace = runspace;
-
-                // Add script and pass command-line arguments
-                ps.AddScript(script);
+                ps.AddScript(script, useLocalScope: true);
                 ps.AddParameter("Args", args);
-
-                // Invoke the script
                 ps.Invoke();
 
                 // Check for errors
