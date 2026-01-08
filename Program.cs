@@ -15,14 +15,14 @@ namespace BMAT_CC_Host
                 string baseDir = AppContext.BaseDirectory;
                 string psHome = Path.Combine(baseDir, "Bin");
 
+                if (!Directory.Exists(psHome))
+                    throw new DirectoryNotFoundException($"PSHOME not found: {psHome}");
+
                 Environment.SetEnvironmentVariable("PSHOME", psHome);
                 Environment.SetEnvironmentVariable("PSModulePath", Path.Combine(psHome, "Modules"));
 
                 Console.WriteLine("BaseDirectory: " + baseDir);
                 Console.WriteLine("PSHOME: " + psHome);
-
-                // Load embedded PowerShell script
-                //string scriptContents = LoadEmbeddedScript("BMAT_CC_Host.BMAT_CC.ps1");
 
                 Assembly asm = Assembly.GetExecutingAssembly();
                 using Stream scriptStream =
@@ -32,10 +32,7 @@ namespace BMAT_CC_Host
                 using StreamReader reader = new StreamReader(scriptStream);
                 string script = reader.ReadToEnd();
 
-                // Create a runspace with full language support
-                //InitialSessionState iss = InitialSessionState.CreateDefault2();
-
-                InitialSessionState iss = InitialSessionState.CreateDefault();
+                InitialSessionState iss = InitialSessionState.Create();
 
                 // Explicitly import built-in modules
                 iss.ImportPSModule(new[]
@@ -54,7 +51,6 @@ namespace BMAT_CC_Host
                 ps.Runspace = runspace;
 
                 // Add script and pass command-line arguments
-                //ps.AddScript(scriptContents);
                 ps.AddScript(script);
                 ps.AddParameter("Args", args);
 
@@ -67,7 +63,9 @@ namespace BMAT_CC_Host
                     Console.Error.WriteLine("PowerShell execution failed:");
                     foreach (var error in ps.Streams.Error)
                         Console.Error.WriteLine(error.ToString());
+                    Console.WriteLine();
                     Console.WriteLine("Press any key to exit...");
+                    Console.ReadKey();
                     return 1;
                 }
 
