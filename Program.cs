@@ -12,6 +12,9 @@ namespace BMAT_CC_Host
         {
             try
             {
+                string psHome = AppContext.BaseDirectory;
+                Environment.SetEnvironmentVariable("PSHOME", psHome);
+
                 // Load embedded PowerShell script
                 var assembly = Assembly.GetExecutingAssembly();
 
