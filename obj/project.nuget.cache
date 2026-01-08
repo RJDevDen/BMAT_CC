@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "YN3y6xsRlUU=",
+  "dgSpecHash": "SJmM91KWACE=",
   "success": true,
   "projectFilePath": "Y:\\DEVELOPMENT\\DEVDEN\\Fallout4\\BMAT_CC\\BMAT_CC.csproj",
   "expectedPackageFiles": [
@@ -19,7 +19,6 @@
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.management.infrastructure.cimcmdlets\\7.5.4\\microsoft.management.infrastructure.cimcmdlets.7.5.4.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.management.infrastructure.runtime.unix\\3.0.0\\microsoft.management.infrastructure.runtime.unix.3.0.0.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.management.infrastructure.runtime.win\\3.0.0\\microsoft.management.infrastructure.runtime.win.3.0.0.nupkg.sha512",
-    "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.net.illink.tasks\\9.0.11\\microsoft.net.illink.tasks.9.0.11.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.powershell.commands.diagnostics\\7.5.4\\microsoft.powershell.commands.diagnostics.7.5.4.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.powershell.commands.management\\7.5.4\\microsoft.powershell.commands.management.7.5.4.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.powershell.commands.utility\\7.5.4\\microsoft.powershell.commands.utility.7.5.4.nupkg.sha512",
