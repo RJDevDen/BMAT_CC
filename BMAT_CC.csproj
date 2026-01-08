@@ -6,7 +6,6 @@
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-        <PublishTrimmed>false</PublishTrimmed>
 
         <AssemblyName>BMAT_CC</AssemblyName>
         <RootNamespace>BMAT_CC_Host</RootNamespace>
