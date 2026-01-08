@@ -60,6 +60,10 @@
             "Microsoft.PowerShell.SDK": {
               "target": "Package",
               "version": "[7.5.4, )"
+            },
+            "Microsoft.Windows.Compatibility": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             }
           },
           "imports": [

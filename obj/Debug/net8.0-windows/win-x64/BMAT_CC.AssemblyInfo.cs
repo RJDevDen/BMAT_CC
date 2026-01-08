@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCopyrightAttribute("© 2025-2026 RJDevDen")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("BA2 Automation Tool for CC Mods")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.7.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.7+df63d52c054a867c69be334fca3f0e3c2c47b31a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.7+812862dda81e2add969f812276c5b59f7c4b4871")]
 [assembly: System.Reflection.AssemblyProductAttribute("BMAT CC")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BMAT_CC")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.7.0")]
