@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "dgSpecHash": "oVLxS4yKqm4=",
-  "success": false,
+  "dgSpecHash": "YN3y6xsRlUU=",
+  "success": true,
   "projectFilePath": "Y:\\DEVELOPMENT\\DEVDEN\\Fallout4\\BMAT_CC\\BMAT_CC.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
@@ -30,10 +30,9 @@
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.powershell.sdk\\7.5.4\\microsoft.powershell.sdk.7.5.4.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.powershell.security\\7.5.4\\microsoft.powershell.security.7.5.4.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.security.extensions\\1.4.0\\microsoft.security.extensions.1.4.0.nupkg.sha512",
-    "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.win32.registry\\5.0.0\\microsoft.win32.registry.5.0.0.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.win32.registry.accesscontrol\\9.0.10\\microsoft.win32.registry.accesscontrol.9.0.10.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.win32.systemevents\\9.0.10\\microsoft.win32.systemevents.9.0.10.nupkg.sha512",
-    "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.windows.compatibility\\9.0.0\\microsoft.windows.compatibility.9.0.0.nupkg.sha512",
+    "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.windows.compatibility\\9.0.10\\microsoft.windows.compatibility.9.0.10.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.wsman.management\\7.5.4\\microsoft.wsman.management.7.5.4.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.wsman.runtime\\7.5.4\\microsoft.wsman.runtime.7.5.4.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\newtonsoft.json\\13.0.4\\newtonsoft.json.13.0.4.nupkg.sha512",
@@ -95,7 +94,7 @@
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.servicemodel.nettcp\\4.10.3\\system.servicemodel.nettcp.4.10.3.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.servicemodel.primitives\\4.10.3\\system.servicemodel.primitives.4.10.3.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.servicemodel.security\\4.10.3\\system.servicemodel.security.4.10.3.nupkg.sha512",
-    "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.servicemodel.syndication\\9.0.0\\system.servicemodel.syndication.9.0.0.nupkg.sha512",
+    "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.servicemodel.syndication\\9.0.10\\system.servicemodel.syndication.9.0.10.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.serviceprocess.servicecontroller\\9.0.10\\system.serviceprocess.servicecontroller.9.0.10.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.speech\\9.0.10\\system.speech.9.0.10.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\system.text.encoding.codepages\\9.0.10\\system.text.encoding.codepages.9.0.10.nupkg.sha512",
@@ -107,18 +106,5 @@
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\9.0.11\\microsoft.windowsdesktop.app.runtime.win-x64.9.0.11.nupkg.sha512",
     "C:\\Users\\RumenZazyov\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\9.0.11\\microsoft.aspnetcore.app.runtime.win-x64.9.0.11.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1605",
-      "level": "Error",
-      "message": "Warning As Error: Detected package downgrade: Microsoft.Windows.Compatibility from 9.0.10 to 9.0.0. Reference the package directly from the project to select a different version. \r\n BMAT_CC -> Microsoft.PowerShell.SDK 7.5.4 -> Microsoft.Windows.Compatibility (>= 9.0.10) \r\n BMAT_CC -> Microsoft.Windows.Compatibility (>= 9.0.0)",
-      "projectPath": "Y:\\DEVELOPMENT\\DEVDEN\\Fallout4\\BMAT_CC\\BMAT_CC.csproj",
-      "filePath": "Y:\\DEVELOPMENT\\DEVDEN\\Fallout4\\BMAT_CC\\BMAT_CC.csproj",
-      "libraryId": "Microsoft.Windows.Compatibility",
-      "targetGraphs": [
-        "net9.0-windows7.0",
-        "net9.0-windows7.0/win-x64"
-      ]
-    }
-  ]
+  "logs": []
 }

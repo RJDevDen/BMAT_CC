@@ -1747,29 +1747,6 @@
           }
         }
       },
-      "Microsoft.Win32.Registry/5.0.0": {
-        "type": "package",
-        "dependencies": {
-          "System.Security.AccessControl": "5.0.0",
-          "System.Security.Principal.Windows": "5.0.0"
-        },
-        "compile": {
-          "ref/netstandard2.0/_._": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/netstandard2.0/Microsoft.Win32.Registry.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtimeTargets": {
-          "runtimes/win/lib/netstandard2.0/Microsoft.Win32.Registry.dll": {
-            "assetType": "runtime",
-            "rid": "win"
-          }
-        }
-      },
       "Microsoft.Win32.Registry.AccessControl/9.0.10": {
         "type": "package",
         "compile": {
@@ -1814,47 +1791,45 @@
           }
         }
       },
-      "Microsoft.Windows.Compatibility/9.0.0": {
+      "Microsoft.Windows.Compatibility/9.0.10": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Win32.Registry": "5.0.0",
-          "Microsoft.Win32.Registry.AccessControl": "9.0.0",
-          "Microsoft.Win32.SystemEvents": "9.0.0",
-          "System.CodeDom": "9.0.0",
-          "System.ComponentModel.Composition": "9.0.0",
-          "System.ComponentModel.Composition.Registration": "9.0.0",
-          "System.Configuration.ConfigurationManager": "9.0.0",
-          "System.Data.Odbc": "9.0.0",
-          "System.Data.OleDb": "9.0.0",
-          "System.Data.SqlClient": "4.8.6",
-          "System.Diagnostics.EventLog": "9.0.0",
-          "System.Diagnostics.PerformanceCounter": "9.0.0",
-          "System.DirectoryServices": "9.0.0",
-          "System.DirectoryServices.AccountManagement": "9.0.0",
-          "System.DirectoryServices.Protocols": "9.0.0",
-          "System.Drawing.Common": "9.0.0",
-          "System.IO.Packaging": "9.0.0",
-          "System.IO.Ports": "9.0.0",
-          "System.Management": "9.0.0",
-          "System.Reflection.Context": "9.0.0",
-          "System.Runtime.Caching": "9.0.0",
-          "System.Security.AccessControl": "6.0.0",
-          "System.Security.Cryptography.Pkcs": "9.0.0",
-          "System.Security.Cryptography.ProtectedData": "9.0.0",
-          "System.Security.Cryptography.Xml": "9.0.0",
-          "System.Security.Permissions": "9.0.0",
+          "Microsoft.Win32.Registry.AccessControl": "9.0.10",
+          "Microsoft.Win32.SystemEvents": "9.0.10",
+          "System.CodeDom": "9.0.10",
+          "System.ComponentModel.Composition": "9.0.10",
+          "System.ComponentModel.Composition.Registration": "9.0.10",
+          "System.Configuration.ConfigurationManager": "9.0.10",
+          "System.Data.Odbc": "9.0.10",
+          "System.Data.OleDb": "9.0.10",
+          "System.Data.SqlClient": "4.9.0",
+          "System.Diagnostics.EventLog": "9.0.10",
+          "System.Diagnostics.PerformanceCounter": "9.0.10",
+          "System.DirectoryServices": "9.0.10",
+          "System.DirectoryServices.AccountManagement": "9.0.10",
+          "System.DirectoryServices.Protocols": "9.0.10",
+          "System.Drawing.Common": "9.0.10",
+          "System.IO.Packaging": "9.0.10",
+          "System.IO.Ports": "9.0.10",
+          "System.Management": "9.0.10",
+          "System.Reflection.Context": "9.0.10",
+          "System.Runtime.Caching": "9.0.10",
+          "System.Security.Cryptography.Pkcs": "9.0.10",
+          "System.Security.Cryptography.ProtectedData": "9.0.10",
+          "System.Security.Cryptography.Xml": "9.0.10",
+          "System.Security.Permissions": "9.0.10",
           "System.Security.Principal.Windows": "5.0.0",
-          "System.ServiceModel.Duplex": "4.10.0",
-          "System.ServiceModel.Http": "4.10.0",
-          "System.ServiceModel.NetTcp": "4.10.0",
-          "System.ServiceModel.Primitives": "4.10.0",
-          "System.ServiceModel.Security": "4.10.0",
-          "System.ServiceModel.Syndication": "9.0.0",
-          "System.ServiceProcess.ServiceController": "9.0.0",
-          "System.Speech": "9.0.0",
-          "System.Text.Encoding.CodePages": "9.0.0",
-          "System.Threading.AccessControl": "9.0.0",
-          "System.Web.Services.Description": "4.10.0"
+          "System.ServiceModel.Duplex": "4.10.3",
+          "System.ServiceModel.Http": "4.10.3",
+          "System.ServiceModel.NetTcp": "4.10.3",
+          "System.ServiceModel.Primitives": "4.10.3",
+          "System.ServiceModel.Security": "4.10.3",
+          "System.ServiceModel.Syndication": "9.0.10",
+          "System.ServiceProcess.ServiceController": "9.0.10",
+          "System.Speech": "9.0.10",
+          "System.Text.Encoding.CodePages": "9.0.10",
+          "System.Threading.AccessControl": "9.0.10",
+          "System.Web.Services.Description": "4.10.3"
         }
       },
       "Microsoft.WSMan.Management/7.5.4": {
@@ -3873,7 +3848,7 @@
           }
         }
       },
-      "System.ServiceModel.Syndication/9.0.0": {
+      "System.ServiceModel.Syndication/9.0.10": {
         "type": "package",
         "compile": {
           "lib/net9.0/System.ServiceModel.Syndication.dll": {
@@ -5671,23 +5646,6 @@
           "runtimes/win-x64/native/getfilesiginforedist.dll": {}
         }
       },
-      "Microsoft.Win32.Registry/5.0.0": {
-        "type": "package",
-        "dependencies": {
-          "System.Security.AccessControl": "5.0.0",
-          "System.Security.Principal.Windows": "5.0.0"
-        },
-        "compile": {
-          "ref/netstandard2.0/_._": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "runtimes/win/lib/netstandard2.0/Microsoft.Win32.Registry.dll": {
-            "related": ".xml"
-          }
-        }
-      },
       "Microsoft.Win32.Registry.AccessControl/9.0.10": {
         "type": "package",
         "compile": {
@@ -5720,47 +5678,45 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "Microsoft.Windows.Compatibility/9.0.0": {
+      "Microsoft.Windows.Compatibility/9.0.10": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Win32.Registry": "5.0.0",
-          "Microsoft.Win32.Registry.AccessControl": "9.0.0",
-          "Microsoft.Win32.SystemEvents": "9.0.0",
-          "System.CodeDom": "9.0.0",
-          "System.ComponentModel.Composition": "9.0.0",
-          "System.ComponentModel.Composition.Registration": "9.0.0",
-          "System.Configuration.ConfigurationManager": "9.0.0",
-          "System.Data.Odbc": "9.0.0",
-          "System.Data.OleDb": "9.0.0",
-          "System.Data.SqlClient": "4.8.6",
-          "System.Diagnostics.EventLog": "9.0.0",
-          "System.Diagnostics.PerformanceCounter": "9.0.0",
-          "System.DirectoryServices": "9.0.0",
-          "System.DirectoryServices.AccountManagement": "9.0.0",
-          "System.DirectoryServices.Protocols": "9.0.0",
-          "System.Drawing.Common": "9.0.0",
-          "System.IO.Packaging": "9.0.0",
-          "System.IO.Ports": "9.0.0",
-          "System.Management": "9.0.0",
-          "System.Reflection.Context": "9.0.0",
-          "System.Runtime.Caching": "9.0.0",
-          "System.Security.AccessControl": "6.0.0",
-          "System.Security.Cryptography.Pkcs": "9.0.0",
-          "System.Security.Cryptography.ProtectedData": "9.0.0",
-          "System.Security.Cryptography.Xml": "9.0.0",
-          "System.Security.Permissions": "9.0.0",
+          "Microsoft.Win32.Registry.AccessControl": "9.0.10",
+          "Microsoft.Win32.SystemEvents": "9.0.10",
+          "System.CodeDom": "9.0.10",
+          "System.ComponentModel.Composition": "9.0.10",
+          "System.ComponentModel.Composition.Registration": "9.0.10",
+          "System.Configuration.ConfigurationManager": "9.0.10",
+          "System.Data.Odbc": "9.0.10",
+          "System.Data.OleDb": "9.0.10",
+          "System.Data.SqlClient": "4.9.0",
+          "System.Diagnostics.EventLog": "9.0.10",
+          "System.Diagnostics.PerformanceCounter": "9.0.10",
+          "System.DirectoryServices": "9.0.10",
+          "System.DirectoryServices.AccountManagement": "9.0.10",
+          "System.DirectoryServices.Protocols": "9.0.10",
+          "System.Drawing.Common": "9.0.10",
+          "System.IO.Packaging": "9.0.10",
+          "System.IO.Ports": "9.0.10",
+          "System.Management": "9.0.10",
+          "System.Reflection.Context": "9.0.10",
+          "System.Runtime.Caching": "9.0.10",
+          "System.Security.Cryptography.Pkcs": "9.0.10",
+          "System.Security.Cryptography.ProtectedData": "9.0.10",
+          "System.Security.Cryptography.Xml": "9.0.10",
+          "System.Security.Permissions": "9.0.10",
           "System.Security.Principal.Windows": "5.0.0",
-          "System.ServiceModel.Duplex": "4.10.0",
-          "System.ServiceModel.Http": "4.10.0",
-          "System.ServiceModel.NetTcp": "4.10.0",
-          "System.ServiceModel.Primitives": "4.10.0",
-          "System.ServiceModel.Security": "4.10.0",
-          "System.ServiceModel.Syndication": "9.0.0",
-          "System.ServiceProcess.ServiceController": "9.0.0",
-          "System.Speech": "9.0.0",
-          "System.Text.Encoding.CodePages": "9.0.0",
-          "System.Threading.AccessControl": "9.0.0",
-          "System.Web.Services.Description": "4.10.0"
+          "System.ServiceModel.Duplex": "4.10.3",
+          "System.ServiceModel.Http": "4.10.3",
+          "System.ServiceModel.NetTcp": "4.10.3",
+          "System.ServiceModel.Primitives": "4.10.3",
+          "System.ServiceModel.Security": "4.10.3",
+          "System.ServiceModel.Syndication": "9.0.10",
+          "System.ServiceProcess.ServiceController": "9.0.10",
+          "System.Speech": "9.0.10",
+          "System.Text.Encoding.CodePages": "9.0.10",
+          "System.Threading.AccessControl": "9.0.10",
+          "System.Web.Services.Description": "4.10.3"
         }
       },
       "Microsoft.WSMan.Management/7.5.4": {
@@ -6578,7 +6534,7 @@
           }
         }
       },
-      "System.ServiceModel.Syndication/9.0.0": {
+      "System.ServiceModel.Syndication/9.0.10": {
         "type": "package",
         "compile": {
           "lib/net9.0/System.ServiceModel.Syndication.dll": {
@@ -8222,50 +8178,6 @@
         "runtimes/win-x86/native/getfilesiginforedist.dll"
       ]
     },
-    "Microsoft.Win32.Registry/5.0.0": {
-      "sha512": "dDoKi0PnDz31yAyETfRntsLArTlVAVzUzCIvvEDsDsucrl33Dl8pIJG06ePTJTI3tGpeyHS9Cq7Foc/s4EeKcg==",
-      "type": "package",
-      "path": "microsoft.win32.registry/5.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "lib/net46/Microsoft.Win32.Registry.dll",
-        "lib/net461/Microsoft.Win32.Registry.dll",
-        "lib/net461/Microsoft.Win32.Registry.xml",
-        "lib/netstandard1.3/Microsoft.Win32.Registry.dll",
-        "lib/netstandard2.0/Microsoft.Win32.Registry.dll",
-        "lib/netstandard2.0/Microsoft.Win32.Registry.xml",
-        "microsoft.win32.registry.5.0.0.nupkg.sha512",
-        "microsoft.win32.registry.nuspec",
-        "ref/net46/Microsoft.Win32.Registry.dll",
-        "ref/net461/Microsoft.Win32.Registry.dll",
-        "ref/net461/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/Microsoft.Win32.Registry.dll",
-        "ref/netstandard1.3/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/de/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/es/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/fr/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/it/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/ja/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/ko/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/ru/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/zh-hans/Microsoft.Win32.Registry.xml",
-        "ref/netstandard1.3/zh-hant/Microsoft.Win32.Registry.xml",
-        "ref/netstandard2.0/Microsoft.Win32.Registry.dll",
-        "ref/netstandard2.0/Microsoft.Win32.Registry.xml",
-        "runtimes/win/lib/net46/Microsoft.Win32.Registry.dll",
-        "runtimes/win/lib/net461/Microsoft.Win32.Registry.dll",
-        "runtimes/win/lib/net461/Microsoft.Win32.Registry.xml",
-        "runtimes/win/lib/netstandard1.3/Microsoft.Win32.Registry.dll",
-        "runtimes/win/lib/netstandard2.0/Microsoft.Win32.Registry.dll",
-        "runtimes/win/lib/netstandard2.0/Microsoft.Win32.Registry.xml",
-        "useSharedDesignerContext.txt",
-        "version.txt"
-      ]
-    },
     "Microsoft.Win32.Registry.AccessControl/9.0.10": {
       "sha512": "ZYHfH0wgTa4usqMMetFYezSjfkQaMat83b/Ykz1q4qSx1h/OiXFb8ZSsn3ZKttHcxe1bn5m/+Zjz9deVT45L8w==",
       "type": "package",
@@ -8330,16 +8242,16 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.Windows.Compatibility/9.0.0": {
-      "sha512": "IYAnKiA4bVeIDQToTo4KGlmHeBk8KLRcjJaHm14/SkdqmoPVXfu2BXB48o+Ad52rkI3baO559cD5g5MxtFvVug==",
+    "Microsoft.Windows.Compatibility/9.0.10": {
+      "sha512": "nCkAfadYeJNfJE/RoKGKFlIHVzovN6/DhLm4ebaCBiLWnP6R/fe22n3BWWqlkT2ignu+GTBrkNLs64e8yCCmGw==",
       "type": "package",
-      "path": "microsoft.windows.compatibility/9.0.0",
+      "path": "microsoft.windows.compatibility/9.0.10",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
         "PACKAGE.md",
-        "microsoft.windows.compatibility.9.0.0.nupkg.sha512",
+        "microsoft.windows.compatibility.9.0.10.nupkg.sha512",
         "microsoft.windows.compatibility.nuspec"
       ]
     },
@@ -10275,10 +10187,10 @@
         "system.servicemodel.security.nuspec"
       ]
     },
-    "System.ServiceModel.Syndication/9.0.0": {
-      "sha512": "DbSOsS63crGeSL1kEbcd2d+G+RQnZ5hbhGMsNWC0mjYqNIpvlZq2tSx5iozhT9RZcbCW3WvZ9qRi0OsXM1pfgg==",
+    "System.ServiceModel.Syndication/9.0.10": {
+      "sha512": "jWOXgKi51ULlPDi+YIWsZglIYUYC1DixAs2j6xdy8fzhuxvXO82yUEXv4wFziqzoG1FmTAV/uv5psxb+3MqB7w==",
       "type": "package",
-      "path": "system.servicemodel.syndication/9.0.0",
+      "path": "system.servicemodel.syndication/9.0.10",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -10298,7 +10210,7 @@
         "lib/net9.0/System.ServiceModel.Syndication.xml",
         "lib/netstandard2.0/System.ServiceModel.Syndication.dll",
         "lib/netstandard2.0/System.ServiceModel.Syndication.xml",
-        "system.servicemodel.syndication.9.0.0.nupkg.sha512",
+        "system.servicemodel.syndication.9.0.10.nupkg.sha512",
         "system.servicemodel.syndication.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -10525,8 +10437,7 @@
   "projectFileDependencyGroups": {
     "net9.0-windows7.0": [
       "Microsoft.NET.ILLink.Tasks >= 9.0.11",
-      "Microsoft.PowerShell.SDK >= 7.5.4",
-      "Microsoft.Windows.Compatibility >= 9.0.0"
+      "Microsoft.PowerShell.SDK >= 7.5.4"
     ]
   },
   "packageFolders": {
@@ -10589,10 +10500,6 @@
           "Microsoft.PowerShell.SDK": {
             "target": "Package",
             "version": "[7.5.4, )"
-          },
-          "Microsoft.Windows.Compatibility": {
-            "target": "Package",
-            "version": "[9.0.0, )"
           }
         },
         "imports": [
@@ -10633,17 +10540,5 @@
         "#import": []
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1605",
-      "level": "Error",
-      "message": "Warning As Error: Detected package downgrade: Microsoft.Windows.Compatibility from 9.0.10 to 9.0.0. Reference the package directly from the project to select a different version. \r\n BMAT_CC -> Microsoft.PowerShell.SDK 7.5.4 -> Microsoft.Windows.Compatibility (>= 9.0.10) \r\n BMAT_CC -> Microsoft.Windows.Compatibility (>= 9.0.0)",
-      "libraryId": "Microsoft.Windows.Compatibility",
-      "targetGraphs": [
-        "net9.0-windows7.0",
-        "net9.0-windows7.0/win-x64"
-      ]
-    }
-  ]
+  }
 }
