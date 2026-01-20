@@ -1074,27 +1074,9 @@ function Get-RandomTip {
 
 #endregion FUNCTIONS
 
+$BMATVersion = "1.0.35"
+
 #region SETUP
-
-# Define the Win32 API functions
-Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-public class Win32 {
-    [DllImport("kernel32.dll")]
-    public static extern IntPtr GetConsoleWindow();
-    [DllImport("user32.dll")]
-    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-}
-"@
-
-# Get the console window handle
-$consolePtr = [Win32]::GetConsoleWindow()
-
-# Maximize the window
-$SW_MAXIMIZE = 3
-[Win32]::ShowWindow($consolePtr, $SW_MAXIMIZE)
-
 if ([System.IO.Path]::GetExtension([System.Environment]::GetCommandLineArgs()[0]) -eq '.exe') {
     # If running as an EXE, get the directory of the process
     $ProcessPath = [System.Environment]::ProcessPath
@@ -1121,7 +1103,6 @@ if ($null -eq $targetFile) {
 }
 
 $StartTime = Get-Date
-$BMATVersion = "1.0.28"
 $GameSupportedLooseFolders = @("Main", "Interface", "Materials", "Meshes", "MeshesExtra", "Scripts", "Sound", "Sounds", "Voices_en", "Voices", "Animations", "Music", "Video", "lodsettings", "vis", "Strings", "F4SE", "Notes", "Textures")
 $TexturesFileTypeRegex = "Textures"
 $TexturesLooseFolderRegex = '^' + $TexturesFileTypeRegex + '$'
