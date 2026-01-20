@@ -14,6 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install PS2EXE
+        shell: pwsh
+        run: |
+          Install-Module ps2exe -Scope CurrentUser -Force -AllowClobber
+
       - name: Set Version
         id: version_step
         shell: pwsh
@@ -24,13 +29,40 @@ jobs:
       - name: Build EXE
         shell: pwsh
         run: |
-          dotnet build BMAT_CC.csproj `
-            -c Release `
-            -o ./temp_build `
-            /p:Version=${{ env.VERSION }} `
-            /p:AssemblyVersion=${{ env.VERSION }}.0 `
-            /p:FileVersion=${{ env.VERSION }}.0 `
-            /p:InformationalVersion=${{ env.VERSION }}
+          ps2exe `
+            -inputFile BMAT_CC.ps1 `
+            -outputFile BMAT_CC.exe `
+            -iconFile BMAT_CC.ico `
+            -title "BMAT CC" `
+            -description "BA2 Automation Tool for CC Mods" `
+            -company "RJDevDen" `
+            -product "BMAT CC" `
+            -copyright "© 2025-2026 RJ" `
+            -trademark "BMAT CC" `
+            -version ${{ env.VERSION }} `
+            -requireAdmin:$false `
+            -noConsole:$false
+
+      - name: Import Code Signing Certificate
+        shell: pwsh
+        run: |
+          $pfx = [Convert]::FromBase64String("${{ secrets.CODESIGN_PFX_BASE64 }}")
+          $path = "$env:TEMP\codesign.pfx"
+          [IO.File]::WriteAllBytes($path, $pfx)
+
+          Import-PfxCertificate `
+            -FilePath $path `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -Password (ConvertTo-SecureString "${{ secrets.CODESIGN_PASSWORD }}" -AsPlainText -Force)
+
+      - name: Sign EXE
+        shell: pwsh
+        run: |
+          signtool sign `
+            /fd SHA256 `
+            /tr http://timestamp.digicert.com `
+            /td SHA256 `
+            BMAT_CC.exe
 
       - name: Set Release Filename
         id: filename_step
