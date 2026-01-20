@@ -1916,12 +1916,6 @@ if (-not $BA2FilesCandidatesList) {
         }
         'No' {
             Write-HostAndLog -Message "You chose to exit BMAT. Exiting..." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
-            $Tip = Get-RandomTip -ChancePercentage 50
-            If ($Tip -match "\w") {
-                Write-Host "`n[TIP] $Tip`n" -ForegroundColor Yellow
-            }
-            Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
-            Pause
             Break
         }
     }
