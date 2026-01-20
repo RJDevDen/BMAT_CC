@@ -1,0 +1,8 @@
+is_global = true
+build_property.RootNamespace = BMAT_CC_Host
+build_property.ProjectDir = Y:\DEVELOPMENT\DEVDEN\Fallout4\BMAT_CC\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 

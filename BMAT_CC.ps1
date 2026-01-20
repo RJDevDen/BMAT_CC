@@ -87,14 +87,14 @@ Function Get-ConfigurationVariables {
             try {
                 Set-Variable -Name $Property.Name -Value $Property.Value -Scope Global -Force
             } catch {
-                Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
+                Write-Host ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
                 Return $false
             }
         }
         try {
             Set-Variable -Name 'GameName' -Value 'fallout4' -Scope Global -Force
         } catch {
-            Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
+            Write-Host ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
             Return $false
         }
         Return $true
@@ -114,10 +114,10 @@ Function Convert-FromVDFToJSON {
     $jsonText = $jsonText -replace '(?<="|\})\s+(?=")', ",`n"
     if (-not $jsonText.StartsWith("{")) { $jsonText = "{" + $jsonText + "}" }
     try {
-        Return $jsonText | ConvertFrom-Json -Depth 10
+        Return $jsonText | ConvertFrom-Json
     } catch {
-        Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
-        Write-Host -Message ("JSON Conversion failed. Current output state:`n{0}" -f $($jsonText | Out-String)) -ForegroundColor DarkYellow
+        Write-Host ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
+        Write-Host ("JSON Conversion failed. Current output state:`n{0}" -f $($jsonText | Out-String)) -ForegroundColor DarkYellow
     }
 }
 
@@ -151,7 +151,7 @@ function Set-Logging {
             }
         }
     } Else {
-        Write-Host -Message ("BMAT logs folder `"{0}`" not found." -f ($LogsFolder)) -ForegroundColor DarkYellow
+        Write-Host ("BMAT logs folder `"{0}`" not found." -f ($LogsFolder)) -ForegroundColor DarkYellow
         Return $false
     }
     If (Test-Path -LiteralPath $LogFilePath) {
@@ -159,7 +159,7 @@ function Set-Logging {
             Write-HostAndLog -Message "Initiating data gathering and analysis stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             Return $true
         } Catch {
-            Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
+            Write-Host ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
             Return $false
         }
     } Else {
@@ -167,7 +167,7 @@ function Set-Logging {
             Write-HostAndLog -Message "Log file created. Initiating data gathering and analysis stage of the process" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
             Return $true
         } Catch {
-            Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
+            Write-Host ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
             Return $false
         }
     }
@@ -234,51 +234,55 @@ function Get-FileWindow {
         [parameter(Mandatory = $false)]
         [string]$Message = $null
     )
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+
     $FileType = Get-FileType -FileName $FileName
-    If ($Title -eq $null -or $Title -eq "") {
-        If ($GameName -eq $null -or $GameName -eq "") {
+    If ([string]::IsNullOrEmpty($Title)) {
+        If ([string]::IsNullOrEmpty($GameName)) {
             $Title = "Where is $FileName file?"
         } Else {
             $Title = "Where is $($GameName.ToUpper()) $FileName file?"
         }
     }
-    If ($Filter -eq $null -or $Filter -eq "") {
-        If ($GameName -eq $null -or $GameName -eq "") {
+    If ([string]::IsNullOrEmpty($Filter)) {
+        If ([string]::IsNullOrEmpty($GameName)) {
             $Filter = "$FileType ($FileName) | $FileName"
         } Else {
             $Filter = "$($GameName.ToUpper()) $FileType ($FileName) | $FileName"
         }
     }
-    If ($Message -eq $null -or $Message -eq "") {
+    If ([string]::IsNullOrEmpty($Message)) {
         $Message = "BMAT failed to find {0} file on its own. Let BMAT know where it is." -f ($FileName)
     }
     Write-HostAndLog -Message $Message -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
-    [void] [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
-    # Create a hidden dummy form to act as the "TopMost" owner
+
+    # Create the TopMost owner window
     $TopWindow = New-Object System.Windows.Forms.Form
     $TopWindow.TopMost = $true
+
     $FileBrowserDialog = New-Object System.Windows.Forms.OpenFileDialog
     $FileBrowserDialog.Title = $Title
-    $FileBrowserDialog.ShowHiddenFiles = $true
-    $FileBrowserDialog.AddToRecent = $false
-    $FileBrowserDialog.Multiselect = $false
-    $FileBrowserDialog.ShowHelp = $false
-    $FileBrowserDialog.ShowPinnedPlaces = $false
-    $FileBrowserDialog.ShowPreview = $false
     $FileBrowserDialog.Filter = $Filter
     $FileBrowserDialog.InitialDirectory = 'C:\'
+    $FileBrowserDialog.Multiselect = $false
+    $FileBrowserDialog.ShowHelp = $false
+
+    $FilePath = $null
     Do {
+        # Pass $TopWindow so the dialog stays in front
         $Result = $FileBrowserDialog.ShowDialog($TopWindow)
+
         if ($Result -eq [System.Windows.Forms.DialogResult]::Cancel) {
-            [System.Windows.Forms.MessageBox]::Show($This, "No File Selected. Please select $FileName file!", "File Selection Error", "OK", [System.Windows.Forms.MessageBoxIcon]::Exclamation) | Out-Null
+            [System.Windows.Forms.MessageBox]::Show($TopWindow, "No File Selected. Please select $FileName file!", "File Selection Error", "OK", [System.Windows.Forms.MessageBoxIcon]::Exclamation) | Out-Null
             $FilePath = $null
-        } ElseIf ($FileBrowserDialog.FileName -notmatch $FileName) {
-            [System.Windows.Forms.MessageBox]::Show($This, "Not Correct File Selected. Please select $FileName file!", "File Selection Error", "OK", [System.Windows.Forms.MessageBoxIcon]::Exclamation) | Out-Null
+        } ElseIf ($FileBrowserDialog.FileName -notmatch [regex]::Escape($FileName)) {
+            [System.Windows.Forms.MessageBox]::Show($TopWindow, "Not Correct File Selected. Please select $FileName file!", "File Selection Error", "OK", [System.Windows.Forms.MessageBoxIcon]::Exclamation) | Out-Null
             $FilePath = $null
         } Else { 
             $FilePath = $FileBrowserDialog.FileName
         }
-    } While ($FilePath -notmatch $FileName)
+    } While ($null -eq $FilePath) # Loop until a valid path is set
     $FileBrowserDialog.Dispose()
     $TopWindow.Dispose()
     Return $FilePath
@@ -297,42 +301,43 @@ function Get-FolderWindow {
         [parameter(Mandatory = $false)]
         [string]$Message = $null
     )
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
 
-    If ($Title -eq $null -or $Title -eq "") {
-        If ($GameName -eq $null -or $GameName -eq "") {
+    If ([string]::IsNullOrEmpty($Title)) {
+        If ([string]::IsNullOrEmpty($GameName)) {
             $Title = "Where is `"..\$FolderName`" folder?"
         } Else {
             $Title = "Where is $($GameName.ToUpper()) `"..\$FolderName`" folder?"
         }
     }
-    If ($Message -eq $null -or $Message -eq "") {
+    If ([string]::IsNullOrEmpty($Message)) {
         $Message = "BMAT failed to find `"..\{0}`" folder on its own. Let BMAT know where it is." -f ($FolderName)
     }
 
     Write-HostAndLog -Message $Message -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
-    [void] [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
-    # Create a hidden dummy form to act as the "TopMost" owner
+
+    # Create the TopMost owner window
     $TopWindow = New-Object System.Windows.Forms.Form
     $TopWindow.TopMost = $true
+
     $FolderBrowserDialog = New-Object System.Windows.Forms.FolderBrowserDialog
     $FolderBrowserDialog.Description = $Title
-    $FolderBrowserDialog.UseDescriptionForTitle = $true
-    $FolderBrowserDialog.ShowPinnedPlaces = $false
     $FolderBrowserDialog.ShowNewFolderButton = $ShowNewFolderButton
-    $FolderBrowserDialog.InitialDirectory = 'C:\'
+
     $FolderPath = $null
     Do {
         $Result = $FolderBrowserDialog.ShowDialog($TopWindow)
         if ($Result -eq [System.Windows.Forms.DialogResult]::Cancel) {
             [System.Windows.Forms.MessageBox]::Show($This, "No Folder Selected. Please select `"..\$FolderName`" folder!", "Folder Selection Error", "OK", [System.Windows.Forms.MessageBoxIcon]::Exclamation)
             $FolderPath = $null
-        } ElseIf ($FolderBrowserDialog.SelectedPath -notmatch $FolderName) {
+        } ElseIf ($FolderBrowserDialog.SelectedPath -notmatch [regex]::Escape($FolderName)) {
             [System.Windows.Forms.MessageBox]::Show($This, "Not Correct Folder Selected. Please select `"..\$FolderName`" folder!", "Folder Selection Error", "OK", [System.Windows.Forms.MessageBoxIcon]::Exclamation) | Out-Null
             $FolderPath = $null
         } Else { 
             $FolderPath = $FolderBrowserDialog.SelectedPath
         }
-    } While ($null -eq $FolderPath)
+    } While ($null -eq $FolderPath) # Loop until a valid path is set
     $FolderPath = $FolderBrowserDialog.SelectedPath
     $FolderBrowserDialog.Dispose()
     $TopWindow.Dispose()
@@ -346,16 +351,17 @@ function Set-FolderWindow {
         [parameter(Mandatory = $false)]
         [boolean]$ShowNewFolderButton = $true
     )
-
-    [void] [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
-    # Create a hidden dummy form to act as the "TopMost" owner
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+    
+    # Create the TopMost owner window
     $TopWindow = New-Object System.Windows.Forms.Form
     $TopWindow.TopMost = $true
+
     $FolderBrowserDialog = New-Object System.Windows.Forms.FolderBrowserDialog
     $FolderBrowserDialog.Description = $Title
-    $FolderBrowserDialog.UseDescriptionForTitle = $true
     $FolderBrowserDialog.ShowNewFolderButton = $ShowNewFolderButton
-    $FolderBrowserDialog.InitialDirectory = 'C:\'
+
     $FolderPath = $null
     Do {
         $Result = $FolderBrowserDialog.ShowDialog($TopWindow)
@@ -365,7 +371,8 @@ function Set-FolderWindow {
         } Else { 
             $FolderPath = $FolderBrowserDialog.SelectedPath
         }
-    } While ($null -eq $FolderPath)
+    } While ($null -eq $FolderPath) # Loop until a valid path is set
+
     $FolderPath = $FolderBrowserDialog.SelectedPath
     $FolderBrowserDialog.Dispose()
     $TopWindow.Dispose()
@@ -381,11 +388,11 @@ function Set-Folder {
     )
     $FolderPath = Join-Path -Path $ParentFolder -ChildPath $FolderName
     If (-not (Test-Path -Path $FolderPath)) {
-        Write-Host -Message ("Creating folder `"{0}`"" -f ($FolderPath)) -ForegroundColor Green
+        Write-Host ("Creating folder `"{0}`"" -f ($FolderPath)) -ForegroundColor Green
         Try {
             New-Item -Path $FolderPath -ItemType Directory -ErrorAction Stop
         } Catch {
-            Write-Host -Message ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
+            Write-Host ("Failure with step. Error message:{0}" -f $($_.Exception.Message)) -ForegroundColor DarkYellow
             Return $false
         }
     }
@@ -416,10 +423,11 @@ function Get-DualDecisionWindow {
     $form = New-Object System.Windows.Forms.Form
     $form.Text = $Title
     $form.AutoSize = $true
-    $form.AutoSizeMode = "GrowAndShrink"
-    $form.StartPosition = "CenterScreen"
-    $form.FormBorderStyle = "FixedDialog"
+    $form.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+    $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $form.MaximizeBox = $false
+    $form.TopMost = $true # Highly recommended for "Decision" windows
 
     # Set form icon
     $GUIIcon = $null
@@ -428,25 +436,17 @@ function Get-DualDecisionWindow {
     } Catch {
         $GUIIcon = $null
     }
-    if ($Category) {
+    if (![string]::IsNullOrEmpty($Category)) {
         switch ($Category) {
-            "Information" { $sysIcon = [System.Drawing.SystemIcons]::Information }
-            "Warning" { $sysIcon = [System.Drawing.SystemIcons]::Warning }
-            "Error" { $sysIcon = [System.Drawing.SystemIcons]::Error }
-            "Question" { $sysIcon = [System.Drawing.SystemIcons]::Question }
+            "Information" { $form.Icon = [System.Drawing.SystemIcons]::Information }
+            "Warning" { $form.Icon = [System.Drawing.SystemIcons]::Warning }
+            "Error" { $form.Icon = [System.Drawing.SystemIcons]::Error }
+            "Question" { $form.Icon = [System.Drawing.SystemIcons]::Question }
         }
-        $form.Icon = $sysIcon
-    } Else {
-        #$IconPath = Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath 'BMAT-CC-16x16.ico'
-        #if (Test-Path $iconPath -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
-        if ($GUIIcon -eq $null) {
-            #$form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
-            $form.Icon = $GUIIcon
-        } else {
-            # Extract a standard system icon (Information, Warning, Error, or Question)
-            $sysIcon = [System.Drawing.SystemIcons]::Information
-            $form.Icon = $sysIcon
-        }
+    } elseif ($null -ne $GUIIcon) {
+        $form.Icon = $GUIIcon
+    } else {
+        $form.Icon = [System.Drawing.SystemIcons]::Information
     }
 
     # Setup the TableLayoutPanel
@@ -457,7 +457,8 @@ function Get-DualDecisionWindow {
     $table.Padding = New-Object System.Windows.Forms.Padding(30)
 
     # Force the column to span the full width of the table
-    [void]$table.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+    $columnStyle = New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)
+    [void]$table.ColumnStyles.Add($columnStyle)
 
     # Message Label
     $label = New-Object System.Windows.Forms.Label
@@ -467,13 +468,13 @@ function Get-DualDecisionWindow {
     # Using 'None' to keep it centered in the table cell
     $label.Anchor = [System.Windows.Forms.AnchorStyles]::None 
     $label.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 20)
-    $label.TextAlign = "MiddleCenter" # Ensures text looks good if it wraps
+    $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter # Ensures text looks good if it wraps
 
     # Creating button Container
     $buttonPanel = New-Object System.Windows.Forms.FlowLayoutPanel
     $buttonPanel.AutoSize = $true
     $buttonPanel.Anchor = [System.Windows.Forms.AnchorStyles]::None
-    $buttonPanel.FlowDirection = "LeftToRight"
+    $buttonPanel.FlowDirection = [System.Windows.Forms.FlowDirection]::LeftToRight
     $buttonPanel.WrapContents = $false
 
     # Creating the buttons
@@ -490,7 +491,8 @@ function Get-DualDecisionWindow {
     $btn2.DialogResult = [System.Windows.Forms.DialogResult]::No
 
     # Window assembly
-    $buttonPanel.Controls.AddRange(@($btn1, $btn2))
+    $buttonPanel.Controls.Add($btn1)
+    $buttonPanel.Controls.Add($btn2)
     $table.Controls.Add($label, 0, 0)
     $table.Controls.Add($buttonPanel, 0, 1)
     $form.Controls.Add($table)
@@ -520,10 +522,11 @@ function Get-MessageWindow {
     $form = New-Object System.Windows.Forms.Form
     $form.Text = $Title
     $form.AutoSize = $true
-    $form.AutoSizeMode = "GrowAndShrink"
-    $form.StartPosition = "CenterScreen"
-    $form.FormBorderStyle = "FixedDialog"
+    $form.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+    $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $form.MaximizeBox = $false
+    $form.TopMost = $true
 
     # Set form icon
     $GUIIcon = $null
@@ -532,25 +535,17 @@ function Get-MessageWindow {
     } Catch {
         $GUIIcon = $null
     }
-    if ($Category) {
+    if (![string]::IsNullOrEmpty($Category)) {
         switch ($Category) {
-            "Information" { $sysIcon = [System.Drawing.SystemIcons]::Information }
-            "Warning" { $sysIcon = [System.Drawing.SystemIcons]::Warning }
-            "Error" { $sysIcon = [System.Drawing.SystemIcons]::Error }
-            "Question" { $sysIcon = [System.Drawing.SystemIcons]::Question }
+            "Information" { $form.Icon = [System.Drawing.SystemIcons]::Information }
+            "Warning" { $form.Icon = [System.Drawing.SystemIcons]::Warning }
+            "Error" { $form.Icon = [System.Drawing.SystemIcons]::Error }
+            "Question" { $form.Icon = [System.Drawing.SystemIcons]::Question }
         }
-        $form.Icon = $sysIcon
-    } Else {
-        #$IconPath = Join-Path -Path $BMATFolder -ChildPath 'tool_files' -AdditionalChildPath 'BMAT-CC-16x16.ico'
-        #if (Test-Path $iconPath -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
-        if ($GUIIcon -eq $null) {
-            #$form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
-            $form.Icon = $GUIIcon
-        } else {
-            # Extract a standard system icon (Information, Warning, Error, or Question)
-            $sysIcon = [System.Drawing.SystemIcons]::Information
-            $form.Icon = $sysIcon
-        }
+    } elseif ($null -ne $GUIIcon) {
+        $form.Icon = $GUIIcon
+    } else {
+        $form.Icon = [System.Drawing.SystemIcons]::Information
     }
 
     # Setup the TableLayoutPanel
@@ -561,7 +556,8 @@ function Get-MessageWindow {
     $table.Padding = New-Object System.Windows.Forms.Padding(30)
 
     # Force the column to span the full width of the table
-    [void]$table.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+    $columnStyle = New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)
+    [void]$table.ColumnStyles.Add($columnStyle)
 
     # Message Label
     $label = New-Object System.Windows.Forms.Label
@@ -571,13 +567,13 @@ function Get-MessageWindow {
     # Using 'None' to keep it centered in the table cell
     $label.Anchor = [System.Windows.Forms.AnchorStyles]::None 
     $label.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 20)
-    $label.TextAlign = "MiddleCenter" # Ensures text looks good if it wraps
+    $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter # Ensures text looks good if it wraps
 
     # Creating button Container
     $buttonPanel = New-Object System.Windows.Forms.FlowLayoutPanel
     $buttonPanel.AutoSize = $true
     $buttonPanel.Anchor = [System.Windows.Forms.AnchorStyles]::None
-    $buttonPanel.FlowDirection = "LeftToRight"
+    $buttonPanel.FlowDirection = [System.Windows.Forms.FlowDirection]::LeftToRight
     $buttonPanel.WrapContents = $false
 
     # Creating the button
@@ -630,7 +626,8 @@ Function Get-GameFolderSteam {
                 $ManifestPath = Join-Path $CurrentPath "steamapps\appmanifest_$SteamAppID.acf"
                 $ManifestContent = Get-Content $ManifestPath -Raw
                 $GameSubfolder = ([regex]::Match($manifestContent, '"installdir"\s+"([^"]+)"')).Groups[1].Value
-                $GamePath = Join-Path -Path $CurrentPath -ChildPath 'steamapps\common' -AdditionalChildPath $GameSubfolder
+                $SteamFolder = Join-Path -Path 'steamapps\common' -ChildPath $GameSubfolder
+                $GamePath = Join-Path -Path $CurrentPath -ChildPath $SteamFolder
                 if (Test-Path -LiteralPath $GamePath) {
                     Return $GamePath
                 }
@@ -674,9 +671,9 @@ Function Get-GameFolder {
     $GameFolder = $null
     $ExePath = $null
     $GameFileFound = $false
-    while ($BMATFolder) {
+    if (!([string]::IsNullOrEmpty($BMATFolder))) {
         $ExePath = Join-Path -Path $BMATFolder -ChildPath $GameFile
-        if (Test-Path -Path $ExePath) {
+        if (!([string]::IsNullOrEmpty($ExePath)) -and (Test-Path -Path $ExePath)) {
             $GameFileFound = $true
             $GameFolder = Split-Path -Parent $ExePath
             break
@@ -687,7 +684,7 @@ Function Get-GameFolder {
     }
     if (-not $GameFileFound) {
         $GamePath = Get-GameFolderSteam -SteamAppID $SteamAppID
-        if (Test-Path -LiteralPath $GamePath) {
+        if (!([string]::IsNullOrEmpty($GamePath)) -and (Test-Path -LiteralPath $GamePath)) {
             $GameFileFound = $true
             $GameFolder = $GamePath
             $ExePath = Join-Path -Path $GameFolder -ChildPath $GameFile
@@ -695,7 +692,7 @@ Function Get-GameFolder {
     }
     if (-not $GameFileFound) {
         $GamePath = Get-GameFolderGoG -GoGAppID $GoGAppID
-        if (Test-Path -LiteralPath $GamePath) {
+        if (!([string]::IsNullOrEmpty($GamePath)) -and (Test-Path -LiteralPath $GamePath)) {
             $GameFileFound = $true
             $GameFolder = $GamePath
             $ExePath = Join-Path -Path $GameFolder -ChildPath $GameFile
@@ -741,8 +738,9 @@ function Get-ModsLoadOrder {
         [parameter(Mandatory = $true)]
         [string]$ConfigFileName
     )
-    $LoadOrderFilePath = Join-Path -Path $env:LOCALAPPDATA -ChildPath $GameName -AdditionalChildPath 'loadorder.txt'
-    If (-not (Test-Path -LiteralPath $LoadOrderFilePath -ErrorAction SilentlyContinue)) {
+    $Loadorder = Join-Path $GameName -ChildPath 'loadorder.txt'
+    $LoadOrderFilePath = Join-Path -Path $env:LOCALAPPDATA -ChildPath $Loadorder
+    If ([string]::IsNullOrEmpty($LoadOrderFilePath) -or -not (Test-Path -LiteralPath $LoadOrderFilePath)) {
         $LoadOrderFilePath = Get-FileWindow -FileName 'loadorder.txt' -GameName $GameName
     }
     $ConfigUpdateResult = Update-ConfigFile -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -Property "LoadOrderFilePath" -Value $LoadOrderFilePath
@@ -766,7 +764,7 @@ function Get-CCModsLoadOrder {
     $LoadOrder = Get-ModsLoadOrder -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
     $IndexedLoadOrder = @()
     If (-not $LoadOrder) {
-        Write-Host -Message "Failure with loading game load order!" -ForegroundColor DarkYellow
+        Write-Host "Failure with loading game load order!" -ForegroundColor DarkYellow
         Return $false
     } Else {
         $CCLoadOrder = $LoadOrder | Where-Object { $_ -match "^cc\w{9}\-" }
@@ -786,19 +784,27 @@ function Get-CCModsLoadOrder {
 }
 
 function Get-CCModsName {
-    $ContentCatalogPath = Join-Path -Path $env:LOCALAPPDATA -ChildPath $GameName -AdditionalChildPath 'ContentCatalog.txt'
-    If (Test-Path -LiteralPath $ContentCatalogPath -ErrorAction SilentlyContinue) {
-        $ContentCatalog = Get-Content -Path $ContentCatalogPath -Raw | ConvertFrom-Json -Depth 10
+    $CatalogPath = Join-Path -Path $GameName -ChildPath 'ContentCatalog.txt'
+    $ContentCatalogPath = Join-Path -Path $env:LOCALAPPDATA -ChildPath $CatalogPath
+    If ((![string]::IsNullOrEmpty($ContentCatalogPath)) -and (Test-Path -LiteralPath $ContentCatalogPath)) {
+        $ContentCatalog = Get-Content -Path $ContentCatalogPath -Raw | ConvertFrom-Json
         $Report = New-Object System.Collections.Generic.List[PSCustomObject]
         foreach ($Key in $ContentCatalog.PSObject.Properties.Name) {
             if ($Key -eq "ContentCatalog") { continue }
             $ModTitle = $ContentCatalog.$Key.Title
             foreach ($FileName in $ContentCatalog.$Key.Files) {
                 If ($FileName -match ".\esp|\.esl|\.esm") {
-                    $Report.Add([PSCustomObject]@{
-                            Plugin  = $FileName
-                            ModName = $ModTitle
-                        })
+                    If ([string]::IsNullOrEmpty($ModTitle)) {
+                        $Report.Add([PSCustomObject]@{
+                                Plugin  = $FileName
+                                ModName = $FileName -replace (".\esp|\.esl|\.esm", "")
+                            })
+                    } else {
+                        $Report.Add([PSCustomObject]@{
+                                Plugin  = $FileName
+                                ModName = $ModTitle
+                            })
+                    }
                 }
             }
         }
@@ -809,22 +815,30 @@ function Get-CCModsName {
 function Get-BSArchPath {
     param (
         [parameter(Mandatory = $True)]
-        [string]$BMATFolder,
-        [parameter(Mandatory = $true)]
-        [string]$ConfigFileName,
-        [parameter(Mandatory = $true)]
-        [string]$OsArchitecture
+        [string]$BMATFolder
     )
-    If ($OsArchitecture -eq "64-bit") {
-        $BSArchexe = "BSArch64.exe"
-    } Else {
-        $BSArchexe = "BSArch.exe"
-    }
-    If (-not (Test-Path -LiteralPath $BSArchPath -ErrorAction SilentlyContinue)) {
+    $BSArchexe = "BSArch.exe"
+    If ([string]::IsNullOrEmpty($BSArchPath) -or -not (Test-Path -LiteralPath $BSArchPath)) {
         $BSArchPath = (Get-ChildItem -LiteralPath $BMATFolder -Recurse -Filter $BSArchexe | Sort-Object -Property LastWriteTime | Select-Object -Last 1).FullName
+        If (![string]::IsNullOrEmpty($BSArchPath)) {
+            $Output = & $BSArchPath
+            If ([string]::IsNullOrEmpty($Output -match 'BSArch [\w]+ x64')) {
+                Return $BSArchPath
+            }
+        }
     }
-    If (-not (Test-Path -LiteralPath $BSArchPath -ErrorAction SilentlyContinue)) {
-        $BSArchPath = Get-FileWindow -FileName $BSArchexe
+    If ([string]::IsNullOrEmpty($BSArchPath) -or -not (Test-Path -LiteralPath $BSArchPath)) {
+        Do {
+            $BSArchPath = Get-FileWindow -FileName $BSArchexe
+            If (![string]::IsNullOrEmpty($BSArchPath)) {
+                $Output = & $BSArchPath
+                If (!([string]::IsNullOrEmpty($Output -match 'BSArch [\w]+ x64'))) {
+                    Break
+                }
+            } else {
+                Write-HostAndLog -Message "BSArch.exe should be x64 version. Please try again." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+            }
+        } while ([string]::IsNullOrEmpty($Output -match 'BSArch [\w]+ x64'))
     }
     Return $BSArchPath
 }
@@ -834,11 +848,12 @@ function Update-BSArchPath2Config {
         [parameter(Mandatory = $True)]
         [string]$BMATFolder,
         [parameter(Mandatory = $true)]
-        [string]$ConfigFileName,
-        [parameter(Mandatory = $true)]
-        [string]$OsArchitecture
+        [string]$ConfigFileName
     )
-    $BSArchPath = Get-BSArchPath -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -OsArchitecture $OsArchitecture
+    $BSArchPath = Get-BSArchPath -BMATFolder $BMATFolder
+    if ($BSArchPath -notmatch "\w") {
+        Return $false
+    }
     $BSArchPathResult = Update-ConfigFile -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -Property "BSArchPath" -Value $BSArchPath
     Get-ConfigurationVariables -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName | Out-Null
     if ($BSArchPath -notmatch "\w" -and -not $BSArchPathResult) {
@@ -873,7 +888,7 @@ function Set-BMATFolders {
         Write-Host "Do not select the game folder or any of the Vortex or MO2 mod manager mods downloads or staging folders!" -ForegroundColor Yellow
         Write-Host "If using BMAT CC only version along with BMAT choose separate folder for BMAT CC!" -ForegroundColor Yellow
         Write-Host "The folder selection window might be hidden behind another window if you have clicked elsewhere during the process." -ForegroundColor Green
-        $SelectedStagingFolderPath = Set-FolderWindow -Title "Select BA2 merge staging folder for BMAT"
+        $SelectedStagingFolderPath = Set-FolderWindow -Title "Select/Create BA2 merge staging folder for BMAT"
         If ($SelectedStagingFolderPath -match "\w") {
             $ConfigUpdateResult = Update-ConfigFile -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -Property "BA2MergingStagingFolder" -Value $SelectedStagingFolderPath
             If (-not $ConfigUpdateResult) {
@@ -894,7 +909,7 @@ function Set-BMATFolders {
         Write-Host "Let BMAT know which folder it can use to extract and repackage mod files. Preferably choose SSD or NVME disk." -ForegroundColor Green
         Write-Host "Do not select the game folder or any of the Vortex or MO2 mod manager mods downloads or staging folders!" -ForegroundColor Yellow
         Write-Host "The folder selection window might be hidden behind another window if you have clicked elsewhere during the process." -ForegroundColor Green
-        $SelectedTempFolderPath = Set-FolderWindow -Title "Select a working folder BMAT"
+        $SelectedTempFolderPath = Set-FolderWindow -Title "Select/Create a working/temp folder BMAT"
         If ($SelectedTempFolderPath -match "\w") {
             $ConfigUpdateResult = Update-ConfigFile -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -Property "BA2MergingTempFolder" -Value $SelectedTempFolderPath
             If (-not $ConfigUpdateResult) {
@@ -948,15 +963,6 @@ function Set-BMATFilesClosed {
     )
     $MergedFilesTrackerPath = Join-Path -Path $TrackerFolder -ChildPath $MergedFilesTrackerName
     Set-FileClosed -FileNamePath $MergedFilesTrackerPath -FileDescription 'BMAT tracker file' -BMATFolder $BMATFolder
-    #$SuffixList = @($ModWhiteListFilesSuffixCsv, $ModWhiteListFilesSuffix, $ModRetexturesListFilesSuffix, $ModUpdateListFilesSuffixCsv)
-    #ForEach ($Suffix in $SuffixList) {
-    #    $BMATLists = Get-ChildItem -LiteralPath $ListsFolder | Where-Object { $_.Name -match ([regex]::Escape($Suffix) + "$") }
-    #    If ($BMATLists) {
-    #        ForEach ($File in $BMATLists) {
-    #            Set-FileClosed -FileNamePath $File.FullName -FileDescription 'BMAT list file'
-    #        }
-    #    }
-    #}
 }
 
 function Get-BMATIcon {
@@ -1022,21 +1028,44 @@ function Set-ConfigDefault {
     Try {
         $DefaultConfig | Out-File $ConfigPath -Encoding utf8
     } Catch {
-        Write-Host -Message "Failure with creating BMAT configuration file! Exiting..." -ForegroundColor DarkYellow
+        Write-Host "Failure with creating BMAT configuration file! Exiting..." -ForegroundColor DarkYellow
         Return $false
     }
     Return $true
 }
 
 function Get-RandomTip {
+    param (
+        [int]$ChancePercentage = 10 # 10% chance
+    )
     $RandomTipsRoll = Get-Random -Minimum 1 -Maximum 101 # 1 to 100
-    if ($RandomTipsRoll -le 10) {
-        # 10% chance
+    if ($RandomTipsRoll -le $ChancePercentage) {
         $Tips = @(
-            "Enjoying the tool? A 'Like' on YouTube helps a lot!",
-            "Don't forget to Endorse BMAT on NexusMods if it saved you time!",
-            "Want to support development? Coffee is always appreciated at Ko-fi.",
-            "Check out my YouTube channel for more guides and tips and tricks!"
+            "Enjoying BMAT? A 'Like' on YouTube helps a lot! My YouTube channel is https://www.youtube.com/@RJDevDen",
+            "Enjoying my content? Subscription on YouTube helps a lot! My YouTube channel is https://www.youtube.com/@RJDevDen",
+            "Don't forget to Endorse BMAT on NexusMods if it saved you time! Link to Nexus is https://www.nexusmods.com/fallout4/mods/89306",
+            "Want to support development? Coffee is always appreciated at Ko-fi. My Ko-fi page is https://ko-fi.com/rjdevden",
+            "Check out my YouTube channel for more guides and tips and tricks! My YouTube channel is https://www.youtube.com/@RJDevDen",
+            "Want to know more about Fallout 4 game engine limits? Check out this article: https://www.nexusmods.com/fallout4/articles/6251",
+            "Don't forget to install the merged mod in your mod manager and enabled its plugin, or you will have issues with your game!",
+            "Always test thoroughly in game after BA2 merge!",
+            "BMAT merges BA2 files not mods plugins! Do not disabled other mods plugins!",
+            "Want to know more about BMAT? Check out the BMAT guides on YouTube: https://www.youtube.com/playlist?list=PLnRJa1RqXU3rI2LYPPeHMsHmbQKEk9L1D",
+            "Game modding requires knowledge, patience and a lot of testing!",
+            "You like my creations and want to support me? A coffee helps a lot! My Ko-fi page is https://ko-fi.com/rjdevden",
+            "You like my mods and want to support me? Endorse my mods on Nexus https://www.nexusmods.com/profile/rjshadowface/mods",
+            "Your game is crashing? Check if you are above the BA2 limit https://www.nexusmods.com/fallout4/articles/6251",
+            "Your game is crashing? Did you forget to enable the BMAT merged mod plugins?",
+            "Your game is crashing? Check the BMAT log file for errors.",
+            "Want to know how many BA2 slots your game is using? Check out this article: https://www.nexusmods.com/fallout4/articles/6251",
+            "Want to know which mods files have been merged? Check the BMAT tracker file.",
+            "Always make sure the merged mod plugins are placed correctly in your load order! Consult the BMAT tracker file for the merged mods load order indexes.",
+            "Not every mod would work when its BA2 files are merged and loaded by another plugin! Always test and don't assume it will work!",
+            "Have issues with a merge? Want to revert mods files as they were? Start BMAT again and do a restore.",
+            "Want to know others experience with BMAT? Check the mod page posts section https://www.nexusmods.com/fallout4/mods/89306?tab=posts",
+            "Don't just throw random mods at your game and expect them to work! Plan ahead or use pre-created and tested mods collections.",
+            "Don't just throw random mods at your game and expect them to work! Mods compatibility is very important.",
+            "Don't just throw random mods at your game and expect them to work! Always read mods description, posts, and bugs pages on Nexus!"
         )
         $SelectedBMATTip = $Tips | Get-Random
     }
@@ -1047,42 +1076,65 @@ function Get-RandomTip {
 
 #region SETUP
 
-# Set the console window maximised
-# 1. Define the Windows API function to control window state
-$WindowCode = @'
-[DllImport("user32.dll")]
-public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-[DllImport("kernel32.dll")]
-public static extern IntPtr GetConsoleWindow();
-'@
-$WinAPI = Add-Type -MemberDefinition $WindowCode -Name "Win32ShowWindow" -Namespace Win32Functions -PassThru
-# 2. Get the handle for the current console window
-$ConsoleHandle = $WinAPI::GetConsoleWindow()
-# 3. Maximize it (The number '3' represents the MAXIMIZE command, 1 = Normal, 2 = Minimize)
-$WinAPI::ShowWindow($ConsoleHandle, 3) | Out-Null
+# Define the Win32 API functions
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class Win32 {
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetConsoleWindow();
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+}
+"@
 
-if ($PSScriptRoot) { 
+# Get the console window handle
+$consolePtr = [Win32]::GetConsoleWindow()
+
+# Maximize the window
+$SW_MAXIMIZE = 3
+[Win32]::ShowWindow($consolePtr, $SW_MAXIMIZE)
+
+if ([System.IO.Path]::GetExtension([System.Environment]::GetCommandLineArgs()[0]) -eq '.exe') {
+    # If running as an EXE, get the directory of the process
+    $ProcessPath = [System.Environment]::ProcessPath
+    If (![string]::IsNullOrEmpty($ProcessPath)) {
+        $BMATFolder = Split-Path -Parent ([System.Environment]::ProcessPath)
+    }
+} elseif ($PSScriptRoot) {
+    # If running as a PS1 script
     $BMATFolder = $PSScriptRoot
+} else {
+    # Fallback for older PS versions or manual console runs
+    $BMATFolder = Get-Location
 }
-if (-not (Get-ChildItem -Path $BMATFolder -File | Where-Object { $_.Name -match "BMAT_CC.(exe|ps1)" })) {
-    $BMATExePath = [System.Environment]::ProcessPath
-    $BMATFolder = Split-Path -Parent $BMATExePath
-    Set-Location $BMATFolder
+# Ensure the path is valid before proceeding
+if ([string]::IsNullOrWhiteSpace($BMATFolder)) {
+    $BMATFolder = (Get-Item -Path ".").FullName
 }
-if (-not (Get-ChildItem -Path $BMATFolder -File | Where-Object { $_.Name -match "BMAT_CC.(exe|ps1)" })) {
-    $BMATFolder = Get-Item -Path '.'
+# Set the Location so relative paths work
+Set-Location -Path $BMATFolder
+# Verify the file exists for debugging
+$targetFile = Get-ChildItem -Path $BMATFolder -File | Where-Object { $_.Name -match "BMAT_CC.(exe|ps1)" }
+if ($null -eq $targetFile) {
+    Write-Error "Could not find BMAT_CC file in $BMATFolder"
 }
 
 $StartTime = Get-Date
-$BMATVersion = "1.0.0"
+$BMATVersion = "1.0.28"
 $GameSupportedLooseFolders = @("Main", "Interface", "Materials", "Meshes", "MeshesExtra", "Scripts", "Sound", "Sounds", "Voices_en", "Voices", "Animations", "Music", "Video", "lodsettings", "vis", "Strings", "F4SE", "Notes", "Textures")
+$TexturesFileTypeRegex = "Textures"
+$TexturesLooseFolderRegex = '^' + $TexturesFileTypeRegex + '$'
+$AllLooseFolderInclusiveRegex = '\\' + ($GameSupportedLooseFolders -join ('(\\)?|\\')) + '(\\)?'
+$AllLossFoldersForMerge = ($AllLossFoldersForMerge -Replace ("\s", "")) -Split (',')
+$NonSupportedFilesFilter = (($NonSupportedFilesFilter -Replace ("\s", "")) -Split (',') | ForEach-Object { '.' + $_ }) -Join ('|')
 
 $Global:ConfigFileName = 'Config.json'
 $ConfigPath = Join-Path -Path $BMATFolder -ChildPath $ConfigFileName
 if (-not (Test-Path $ConfigPath)) {
     $DefaultConfigResult = Set-ConfigDefault -ConfigPath $ConfigPath
     If (-not $DefaultConfigResult) {
-        Write-Host -Message "Failure with creating BMAT configuration file! Exiting..." -ForegroundColor DarkYellow
+        Write-Host "Failure with creating BMAT configuration file! Exiting..." -ForegroundColor DarkYellow
         Pause
         Break
     }
@@ -1102,21 +1154,21 @@ Write-Host "`tDeveloped by RJ (RJDevDen)`n" -ForegroundColor Gray
 
 $GetConfigResult = Get-ConfigurationVariables -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
 If (-not $GetConfigResult) {
-    Write-Host -Message "Failure with fetching BMAT configuration! Exiting..." -ForegroundColor DarkYellow
+    Write-Host "Failure with fetching BMAT configuration! Exiting..." -ForegroundColor DarkYellow
     Pause
     Break
 }
 
 $SetFoldersResult = Set-BMATFolders -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -BA2MergingStagingFolder $BA2MergingStagingFolder -BA2MergingTempFolder $BA2MergingTempFolder
 If (-not $SetFoldersResult) {
-    Write-Host -Message "Failure setting up BMAT folders! Exiting..." -ForegroundColor DarkYellow
+    Write-Host "Failure setting up BMAT folders! Exiting..." -ForegroundColor DarkYellow
     Pause
     Break
 }
 
 $SetLoggingResult = Set-Logging -BMATFolder $BMATFolder
 If (-not $SetLoggingResult) {
-    Write-Host -Message "Failure with setting up BMAT logging! Exiting..." -ForegroundColor DarkYellow
+    Write-Host "Failure with setting up BMAT logging! Exiting..." -ForegroundColor DarkYellow
     Pause
     Break
 }
@@ -1135,8 +1187,7 @@ If (-not $SetGameFolderResult) {
 $Global:OSDetails = Get-ComputerInfo
 Write-HostAndLog -Message ("OS runtime environment: {0} {1}" -f ($OSDetails.OSName, $OSDetails.OsArchitecture)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
 
-#$SetBSArchPathResult = Update-BSArchPath2Config -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -OsArchitecture $OSDetails.OsArchitecture
-$SetBSArchPathResult = Update-BSArchPath2Config -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName -OsArchitecture '32-bit'
+$SetBSArchPathResult = Update-BSArchPath2Config -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
 If (-not $SetBSArchPathResult) {
     Write-HostAndLog -Message "Failure with finding and storing BSArch path in config file! Exiting..." -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
     Pause
@@ -1145,7 +1196,7 @@ If (-not $SetBSArchPathResult) {
 
 $ConfigResult = Get-ConfigurationVariables -BMATFolder $BMATFolder -ConfigFileName $ConfigFileName
 If (-not $ConfigResult) {
-    Write-Host -Message "Failure with fetching BMAT configuration! Exiting..." -ForegroundColor DarkYellow
+    Write-Host "Failure with fetching BMAT configuration! Exiting..." -ForegroundColor DarkYellow
     Pause
     Break
 }
@@ -1325,6 +1376,11 @@ If ($RA_Response -eq "r") {
     }
     Get-MessageWindow -Title "Remove BMAT merged mod!" -Message "To complete the restore process you need to manually remove the created by BMAT merge mod '$BA2MergedModName' from yor mod manager!" -Category Warning | Out-Null
 
+    $Tip = Get-RandomTip -ChancePercentage 50
+    If ($Tip -match "\w") {
+        Write-Host "`n[TIP] $Tip`n" -ForegroundColor Yellow
+    }
+
     Write-HostAndLog -Message "BMAT restoration finished. Closing BMAT..." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
     Pause
@@ -1360,7 +1416,7 @@ If ($RA_Response -eq "a") {
                 $Type = "UNKNOWN"
             }
 
-            $FileBytes = Get-Content -LiteralPath $File.FullName -AsByteStream -TotalCount 12
+            $FileBytes = Get-Content -LiteralPath $File.FullName -Encoding Byte -TotalCount 12
             $ArchiveType = [System.Text.Encoding]::UTF8.GetString($FileBytes[-4..-1])
             If ($ArchiveType -eq 'GNRL') {
                 $DiscoveredType = 'Main'
@@ -1443,7 +1499,7 @@ If ($RA_Response -eq "a") {
             $Line.Mod_BA2_Modified = [datetime]::parseexact($Line.Mod_BA2_Modified, 'dd-MM-yyyy-HH-mm-ss', $null)
             $DateUpdatedTracker += $Line
             $FileStagingPath = Join-Path -Path $Line.Mod_Target_Path -ChildPath $Line.Mod_BA2_File
-            If (Test-Path -LiteralPath $FileStagingPath -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
+            If ((!([string]::IsNullOrEmpty($FileStagingPath))) -and (Test-Path -LiteralPath $FileStagingPath)) {
                 $StagedFiles += $Line.Mod_BA2_File
             }
         }
@@ -1475,7 +1531,7 @@ If ($RA_Response -eq "a") {
             IF ($null -ne ($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name })) {
                 If ($null -ne ($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name -and (($_.BA2_Files_Details -ne $null -and $File.Mod_BA2_File -ne $null) -and $_.BA2_Files_Details.Name -contains $File.Mod_BA2_File) })) {
                     $ModObj = (($FullModList | Where-Object { $_.Mod_Name -eq $File.Mod_Name -and $_.BA2_Files_Details.Name -eq $File.Mod_BA2_File }).BA2_Files_Details | Where-Object { $_.Name -eq $File.Mod_BA2_File })
-                    $ModObj.Path = ($File.Mod_Target_Path + '\' + $File.Mod_BA2_File)
+                    $ModObj.Path = (Join-Path -Path $File.Mod_Target_Path -ChildPath $File.Mod_BA2_File)
                     $ModObj.Included_In_BA2 = $File.Included_In_BA2
                     $ModObj.Folder = $File.Mod_Folder
                     $ModObj.Folder_Path = $File.Mod_Folder_Path
@@ -1484,7 +1540,7 @@ If ($RA_Response -eq "a") {
                         "Name"                = $File.Mod_BA2_File;
                         "Folder"              = $File.Mod_Folder;
                         "Folder_Path"         = $File.Mod_Folder_Path;
-                        "Path"                = ($File.Mod_Target_Path + '\' + $File.Mod_BA2_File);
+                        "Path"                = (Join-Path -Path $File.Mod_Target_Path -ChildPath $File.Mod_BA2_File);
                         "Modified"            = [datetime]($File.Mod_BA2_Modified);
                         "Size_Bytes"          = $File.Mod_BA2_Size_Bytes;
                         "Type"                = $File.Mod_BA2_Type;
@@ -1499,7 +1555,7 @@ If ($RA_Response -eq "a") {
                         "Name"                = $File.Mod_BA2_File;
                         "Folder"              = $File.Mod_Folder;
                         "Folder_Path"         = $File.Mod_Folder_Path;
-                        "Path"                = ($File.Mod_Target_Path + '\' + $File.Mod_BA2_File);
+                        "Path"                = (Join-Path -Path $File.Mod_Target_Path -ChildPath $File.Mod_BA2_File);
                         "Modified"            = [datetime]($File.Mod_BA2_Modified);
                         "Size_Bytes"          = $File.Mod_BA2_Size_Bytes;
                         "Type"                = $File.Mod_BA2_Type;
@@ -1516,7 +1572,7 @@ If ($RA_Response -eq "a") {
         }
     }
     Try {
-        Add-Content -Path $LogFilePath -Value ("{0} - {1}: Full Mods Details (if tracker is available the ba2 files details will be updated with the details from it):`n{2}" -f ($(Get-Date), 'INFO', (ConvertTo-Json ($FullModList | Where-Object { $_.Game -eq $GameName }) -Depth 10)))
+        Add-Content -Path $LogFilePath -Value ("{0} - {1}: Full Mods Details (if tracker is available the ba2 files details will be updated with the details from it):`n{2}" -f ($(Get-Date), 'INFO', (ConvertTo-Json ($FullModList | Where-Object { $_.Game -eq $GameName }))))
     } Catch {
         Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
     }
@@ -1843,6 +1899,8 @@ If ($RA_Response -eq "a") {
     }
 
     Write-HostAndLog -Message "Data gathering and analysis stage of the process has completed" -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+    Write-Host "`nMaximise this console window before progressing!" -ForegroundColor Cyan
+    Pause
     Write-HostAndLog -Message ("The following list of potential mods ba2 files candidates were identified by BMAT:`n{0}" -f ($ModsChangeTracker | Format-Table -Property @{e = 'Mod_Display_Name'; width = 28 }, @{e = 'Mod_Name'; width = 28 }, @{e = 'Mod_BA2_File'; width = 23 }, @{e = 'Status'; width = 20 }, @{e = 'Updated_By'; width = 28 }, @{e = 'In_BA2'; width = 23 }, @{e = 'BA2_Re_Merge'; width = 5 }, @{e = 'Plugin_Name'; width = 23 }, @{e = 'LO_Index'; width = 5 } -Wrap | Out-String)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
 } 
 #endregion ANALYSIS
@@ -2110,68 +2168,80 @@ If ($ME_Response -eq "m") {
 
                 # Moving BA2 files to staging
                 # New mod to BMAT, file not in source place, but file is in target place
-                If (($ModFile.Status -eq "New_Candidate") -and -not (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) {
+
+                $BA2FileSourcePath = Join-Path -Path $ModFile.Mod_Source_Path -ChildPath $ModFile.Mod_BA2_File
+                $BA2FileTargetPath = Join-Path -Path $ModFile.Mod_Target_Path -ChildPath $ModFile.Mod_BA2_File
+                if (![string]::IsNullOrWhiteSpace(($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path)) {
+                    $TrackerBA2FileSourcePath = Join-Path -Path ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path -ChildPath $ModFile.Mod_BA2_File
+                } else {
+                    $TrackerBA2FileSourcePath = $null
+                }
+                If (($ModFile.Status -eq "New_Candidate") -and -not (Test-Path -LiteralPath $BA2FileSourcePath) -and (Test-Path -LiteralPath $BA2FileTargetPath)) {
                     Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     # Mod file source and target paths are the same, and file path exists
-                } ElseIf (($ModFile.Mod_Source_Path -eq $ModFile.Mod_Target_Path) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) {
+                } ElseIf (($ModFile.Mod_Source_Path -eq $ModFile.Mod_Target_Path) -and (Test-Path -LiteralPath $BA2FileTargetPath)) {
                     Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     # If the ba2 file exist in both source and target and if their modify dates match
-                } ElseIf (((Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File) -ErrorAction SilentlyContinue)) -and ($ModFile.Modified -eq ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_BA2_Modified)) {
+                } ElseIf ((((!([string]::IsNullOrEmpty($BA2FileSourcePath))) -and (Test-Path -LiteralPath $BA2FileSourcePath)) -and ((!([string]::IsNullOrEmpty($BA2FileTargetPath))) -and (Test-Path -LiteralPath $BA2FileTargetPath))) -and ($ModFile.Modified -eq ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_BA2_Modified)) {
                     Write-HostAndLog -Message ("File `"{0}`" found in the game folder as well as in the BMAT repackaging staging folder. The mod file in game folder will be removed." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     Try {
                         $ProgressPreference = 'SilentlyContinue'
-                        Remove-Item -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -ErrorAction Stop
+                        Remove-Item -LiteralPath $BA2FileSourcePath -ErrorAction Stop
                         $ProgressPreference = 'Continue'
                     } Catch {
                         Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     # If the file path from tracker does not exist and the file from the full list i.e. the updated/replaced file exist in source
-                } ElseIf ($BA2RepackageTracker -and -not (Test-Path -LiteralPath (($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) -and (Test-Path -Path ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) {
-                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
-                    If (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) {
+                } ElseIf ($BA2RepackageTracker -and -not (Test-Path -LiteralPath $TrackerBA2FileSourcePath) -and (Test-Path -Path $BA2FileSourcePath)) {
+                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f ($BA2FileSourcePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+                    If (Test-Path -LiteralPath $BA2FileSourcePath) {
                         Try {
-                            Move-Item -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
+                            Move-Item -LiteralPath $BA2FileSourcePath -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
                         } Catch {
                             Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
+                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f ($BA2FileSourcePath)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     # If BA2 files names between the one in the full list and the one in the tracker list match, but their modify dates are different
                 } ElseIf (($ModFile.Mod_BA2_File -eq ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_BA2_File) -and ($ModFile.Modified -ne ($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_BA2_Modified)) {
-                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f ((($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
-                    If (Test-Path -LiteralPath (($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) {
+                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f ($TrackerBA2FileSourcePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+                    If (Test-Path -LiteralPath $TrackerBA2FileSourcePath) {
                         Try {
-                            Move-Item -LiteralPath (($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
+                            Move-Item -LiteralPath $TrackerBA2FileSourcePath -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
                         } Catch {
                             Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f ((($BA2RepackageTracker | Where-Object { $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
+                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f ($TrackerBA2FileSourcePath)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                     # If file not in source place, but file is in target place
-                } ElseIf (-not (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) -and (Test-Path -LiteralPath ($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) {
+                } ElseIf (-not (Test-Path -LiteralPath $BA2FileSourcePath) -and (Test-Path -LiteralPath $BA2FileTargetPath)) {
                     Write-HostAndLog -Message ("File `"{0}`" is already in the working folder." -f ($ModFile.Mod_BA2_File)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 } Else {
-                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
-                    If (Test-Path -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File)) {
+                    Write-HostAndLog -Message ("Relocating file `"{0}`" to working folder." -f ($BA2FileSourcePath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+                    If (Test-Path -LiteralPath $BA2FileSourcePath) {
                         Try {
-                            Move-Item -LiteralPath ($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File) -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
+                            Move-Item -LiteralPath $BA2FileSourcePath -Destination $ModFile.Mod_Target_Path -Force -Confirm:$false -ErrorAction Stop
                         } Catch {
                             Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                         }
                     } Else {
-                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f (($ModFile.Mod_Source_Path + '\' + $ModFile.Mod_BA2_File))) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
+                        Write-HostAndLog -Message ("File `"{0}`" doesn't exist" -f ($BA2FileSourcePath)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
                     }
                 }
 
                 # Extracting ba2 files to work folder
                 If (($FileExtrackTracker | Where-Object { $_.Mod_Name -eq $ModDetails.Mod_Name -and $_.Mod_BA2_File -eq $ModFile.Mod_BA2_File }).Extracted -eq $True) {
-                    Write-HostAndLog -Message ("File `"{0}`" has already been extracted. Skipping..." -f (($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+                    Write-HostAndLog -Message ("File `"{0}`" has already been extracted. Skipping..." -f ($BA2FileTargetPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 } Else {
-                    Write-HostAndLog -Message ("Extracting file `"{0}`"." -f (($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File))) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+                    Write-HostAndLog -Message ("Extracting file `"{0}`"." -f ($BA2FileTargetPath)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                     Try {
-                        $Output = Invoke-Expression -Command "& `"$BSArchPath`" unpack `"$($ModFile.Mod_Target_Path + '\' + $ModFile.Mod_BA2_File)`" `"$CleanUpFolder`" 2>&1" -ErrorAction Stop
+                        $SourceFile = Join-Path -Path $ModFile.Mod_Target_Path -ChildPath $ModFile.Mod_BA2_File
+                        $Output = & $BSArchPath unpack $SourceFile $CleanUpFolder 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            Throw "BSArch failed to unpack $SourceFile. Exit Code: $LASTEXITCODE"
+                        }
                     } Catch {
                         Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                     }
@@ -2202,7 +2272,7 @@ If ($ME_Response -eq "m") {
 
                 # Moving BA2 files to their respective overwrite temp folder
                 Try {
-                    $BA2Folders = Get-ChildItem -LiteralPath $CleanUpFolder -Directory -ErrorAction Stop | Where-Object { (Get-ChildItem -LiteralPath $_ -Recurse).FullName -match $AllLooseFolderInclusiveRegex }
+                    $BA2Folders = Get-ChildItem -LiteralPath $CleanUpFolder -Directory -ErrorAction Stop | Where-Object { (Get-ChildItem -LiteralPath $_.FullName -Recurse).FullName -match $AllLooseFolderInclusiveRegex }
                 } Catch {
                     Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
@@ -2376,7 +2446,12 @@ If ($ME_Response -eq "m") {
                 }
                 Write-HostAndLog -Message ("Archiving the Textures BA2 files for group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Try {
-                    $Output = Invoke-Expression -Command "& `"$BSArchPath`" pack `"$TemporaryWorkingFolder`" `"$("{0}\{1} - Textures.BA2" -f ($OutputWorkingFolder,$MergeFile.Name))`" -share -fo4dds -z 2>&1" -ErrorAction Stop
+                    $FileName = "{0} - Textures.BA2" -f $MergeFile.Name
+                    $TargetFilePath = Join-Path -Path $OutputWorkingFolder -ChildPath $FileName
+                    $Output = & $BSArchPath pack $TemporaryWorkingFolder $TargetFilePath -share -fo4dds -z 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        Throw "BSArch failed to pack $TargetFilePath. Exit Code: $LASTEXITCODE"
+                    }
                 } Catch {
                     Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
@@ -2427,7 +2502,12 @@ If ($ME_Response -eq "m") {
                 }
                 Write-HostAndLog -Message ("Archiving the Main BA2 files for group `"{0}`"." -f ($MergeFile.Name)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
                 Try {
-                    $Output = Invoke-Expression -Command "& `"$BSArchPath`" pack `"$TemporaryWorkingFolder`" `"$("{0}\{1} - Main.BA2" -f ($OutputWorkingFolder,$MergeFile.Name))`" -share -fo4 2>&1" -ErrorAction Stop
+                    $FileName = "{0} - Main.BA2" -f $MergeFile.Name
+                    $TargetFilePath = Join-Path -Path $OutputWorkingFolder -ChildPath $FileName
+                    $Output = & $BSArchPath pack $TemporaryWorkingFolder $TargetFilePath -share -fo4 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        Throw "BSArch failed to pack $TargetFilePath. Exit Code: $LASTEXITCODE"
+                    }
                 } Catch {
                     Write-HostAndLog -Message "Failure with step. Error message: $($_.Exception.Message)" -Category ERROR -LogfilePath $LogFilePath -DetailedLogging $true
                 }
@@ -2490,7 +2570,7 @@ If ($ME_Response -eq "m") {
         $TotalProcessedModFilesRawUnique = ($TotalProcessedModFilesRaw | ForEach-Object { $_.File_Path.Replace($CleanUpFolder, '') }) | Sort-Object -Unique
         $TotalProcessedModFilesPreArchUnique = ($TotalProcessedModFilesPreArch | ForEach-Object { $_.File_Path -Replace ("($($TemporaryMainFolder.Replace('\','\\'))|$($TemporaryTexturesFolder.Replace('\','\\')))", '') }) | Sort-Object -Unique
         If ($TotalProcessedModFilesRawUnique.Count -ne $TotalProcessedModFilesPreArchUnique.Count) {
-            Write-HostAndLog -Message ("There were {0} mods content files post BA2 files extract and loose files preparation and {1} mods content files just before BA2 compression." -f ($TotalProcessedModFilesRawUnique.Count, $TotalProcessedModFilesPreArchUnique.Count)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
+            Write-HostAndLog -Message ("There were {0} mods content files post BA2 files extract and {1} mods content files just before BA2 compression." -f ($TotalProcessedModFilesRawUnique.Count, $TotalProcessedModFilesPreArchUnique.Count)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
             $MissingFiles = Compare-Object $TotalProcessedModFilesRawUnique $TotalProcessedModFilesPreArchUnique | Where-Object { $_.SideIndicator -eq '<=' } | Select-Object -ExpandProperty InputObject
             Write-HostAndLog -Message ("The delta files are:`n{0}" -f ($MissingFiles | Out-String)) -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
         }
@@ -2500,7 +2580,6 @@ If ($ME_Response -eq "m") {
     Write-HostAndLog -Message "Updating repackage tracker." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
     IF ($ModsChangeTracker) {
         # Checking BMAT tracker file is not opened
-        #If (Test-Path -LiteralPath $MergedFilesTrackerFolder -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
         If (Test-Path -LiteralPath $TrackerFolder) {
             Set-FileClosed -FileNamePath $MergedFilesTrackerPath -FileDescription 'BMAT tracker file' -BMATFolder $BMATFolder
         } Else {
@@ -2584,9 +2663,9 @@ If ($ME_Response -eq "m") {
 $EndTime = Get-Date
 $LapsedTime = $EndTime - $StartTime
 Write-HostAndLog -Message ("It took {0} hours, {1} minutes, and {2} seconds to complete the process this time." -f ($LapsedTime.Hours, $LapsedTime.Minutes, $LapsedTime.Seconds)) -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
-$Tip = Get-RandomTip
-If ($Tip) {
-    Write-Host "`n[TIP] $(Get-RandomTip)" -ForegroundColor Yellow
+$Tip = Get-RandomTip -ChancePercentage 50
+If ($Tip -match "\w") {
+    Write-Host "`n[TIP] $Tip`n" -ForegroundColor Yellow
 }
 Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
 Pause

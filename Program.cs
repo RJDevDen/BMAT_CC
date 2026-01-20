@@ -12,23 +12,6 @@ namespace BMAT_CC_Host
         {
             try
             {
-                //string baseDir = AppContext.BaseDirectory;
-                string baseDir = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
-                string psHome = Path.Combine(baseDir, "Bin");
-
-                if (!Directory.Exists(psHome))
-                    throw new DirectoryNotFoundException($"PowerShell home not found: {psHome}");
-
-                Environment.SetEnvironmentVariable("PSHOME", psHome);
-                Environment.SetEnvironmentVariable(
-                    "PSModulePath",
-                    Path.Combine(psHome, "Modules"),
-                    EnvironmentVariableTarget.Process
-                );
-
-                Console.WriteLine("BaseDirectory: " + baseDir);
-                Console.WriteLine("PSHOME: " + psHome);
-
                 // Load embedded script
                 Assembly asm = Assembly.GetExecutingAssembly();
                 const string scriptResource = "BMAT_CC_Host.BMAT_CC.ps1";
@@ -40,15 +23,19 @@ namespace BMAT_CC_Host
                 using StreamReader reader = new StreamReader(scriptStream);
                 string script = reader.ReadToEnd();
 
-                InitialSessionState iss = InitialSessionState.CreateDefault2();
+                // PowerShell 5.1 default session
+                InitialSessionState iss = InitialSessionState.CreateDefault();
+
                 using Runspace runspace = RunspaceFactory.CreateRunspace(iss);
                 runspace.Open();
 
                 // Create PowerShell instance and assign runspace
                 using PowerShell ps = PowerShell.Create();
                 ps.Runspace = runspace;
-                ps.AddScript(script, useLocalScope: true);
+
+                ps.AddScript(script);
                 ps.AddParameter("Args", args);
+
                 ps.Invoke();
 
                 // Check for errors
