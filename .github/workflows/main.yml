@@ -22,14 +22,15 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "VERSION=$version"
 
       - name: Build EXE
+        shell: pwsh
         run: |
-          msbuild BMAT_CC.csproj `
-            /p:Configuration=Release `
-            /p:OutputPath=./temp_build `
-            /p:Version=${{ env.VERSION }} `
-            /p:AssemblyVersion=${{ env.VERSION }}.0 `
-            /p:FileVersion=${{ env.VERSION }}.0 `
-            /p:InformationalVersion=${{ env.VERSION }}
+          dotnet build BMAT_CC.csproj `
+            -c Release `
+            -o ./temp_build `
+            /p:Version=$version `
+            /p:AssemblyVersion=$version.0 `
+            /p:FileVersion=$version.0 `
+            /p:InformationalVersion=$version
 
       - name: Set Release Filename
         id: filename_step
