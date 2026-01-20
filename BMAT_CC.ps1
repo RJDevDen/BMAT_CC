@@ -1014,9 +1014,9 @@ function Set-ConfigDefault {
   "_comment": "The following property defines the path to xEdit's BSArch.exe or BSArch64.exe. If empty BMAT will ask once during run and will store the value here.",
   "BSArchPath": "",
   "_comment": "The following property defines the name of the new re-package mod name, the esp file name, and the ba2 file names.",
-  "BA2MergedModName": "BMAT_BA2_Merge",
+  "BA2MergedModName": "BMAT_CC_Merge",
   "_comment": "The following property defines the which will be used by BMAT. 2 logs are always maintained by the script where one is current, and one is the previous log file.",
-  "LogFileName": "bmat_ba2_merge",
+  "LogFileName": "bmat_cc_merge",
   "_comment": "The following property defines the name of the csv file where BMAT will keep track of any processed mods and ba2 files. Once you start using BMAT deletion or manual modification of this file is not recommended.",
   "MergedFilesTrackerName": "bmat_merged-files-tracker.csv",
   "_comment": "List files extensions where BMAT will check if any of those are found in the mod ba2 files and report on them to flag a dirty ba2 file.",
@@ -1890,11 +1890,21 @@ If ($RA_Response -eq "a") {
 if (-not $BA2FilesCandidatesList) {
     Write-HostAndLog -Message "Based on the current BMAT configuration and, and based on the mods data analysis there are no BA2 candidates found which can be merged. Exiting..." -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
     Get-MessageWindow -Title "No BA2 candidates!" -Message "Based on the current BMAT configuration and, and based on the mods data analysis there are no BA2 candidates found which can be merged. Exiting..." -Category Warning | Out-Null
+    $Tip = Get-RandomTip -ChancePercentage 50
+    If ($Tip -match "\w") {
+        Write-Host "`n[TIP] $Tip`n" -ForegroundColor Yellow
+    }
+    Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
     Pause
     Break
 } elseif (($MembersCounter.Qt_Changed + $MembersCounter.Qt_Status_For_Merge + $MembersCounter.Qt_Status_Removed_from_Game | Measure-Object -Sum).Sum -eq 0) {
     Write-HostAndLog -Message "No BA2 candidates found which need merging or re-merging. Exiting..." -Category WARNING -LogfilePath $LogFilePath -DetailedLogging $true
     Get-MessageWindow -Title "No BA2 candidates!" -Message "No BA2 candidates found which need merging or re-merging. Exiting..." -Category Warning | Out-Null
+    $Tip = Get-RandomTip -ChancePercentage 50
+    If ($Tip -match "\w") {
+        Write-Host "`n[TIP] $Tip`n" -ForegroundColor Yellow
+    }
+    Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
     Pause
     Break
 } else {
@@ -1906,6 +1916,12 @@ if (-not $BA2FilesCandidatesList) {
         }
         'No' {
             Write-HostAndLog -Message "You chose to exit BMAT. Exiting..." -Category INFO -LogfilePath $LogFilePath -DetailedLogging $true
+            $Tip = Get-RandomTip -ChancePercentage 50
+            If ($Tip -match "\w") {
+                Write-Host "`n[TIP] $Tip`n" -ForegroundColor Yellow
+            }
+            Write-Host "`nProcess Complete. Thank you for using BMAT!" -ForegroundColor Cyan
+            Pause
             Break
         }
     }
