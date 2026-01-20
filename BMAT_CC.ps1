@@ -1074,7 +1074,7 @@ function Get-RandomTip {
 
 #endregion FUNCTIONS
 
-$BMATVersion = "1.0.37"
+$BMATVersion = "1.0.38"
 
 #region SETUP
 if ([System.IO.Path]::GetExtension([System.Environment]::GetCommandLineArgs()[0]) -eq '.exe') {
