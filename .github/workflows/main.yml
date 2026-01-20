@@ -27,18 +27,17 @@ jobs:
           dotnet build BMAT_CC.csproj `
             -c Release `
             -o ./temp_build `
-            /p:Version=$version `
-            /p:AssemblyVersion=$version.0 `
-            /p:FileVersion=$version.0 `
-            /p:InformationalVersion=$version
+            /p:Version=${{ env.VERSION }} `
+            /p:AssemblyVersion=${{ env.VERSION }}.0 `
+            /p:FileVersion=${{ env.VERSION }}.0 `
+            /p:InformationalVersion=${{ env.VERSION }}
 
       - name: Set Release Filename
         id: filename_step
         shell: pwsh
         run: |
           $date = Get-Date -Format "ddMMyyyy"
-          $version = "${{ github.ref_name }}".TrimStart('v')
-          $finalName = "BMAT_CC_${date}_${version}"
+          $finalName = "BMAT_CC_${date}_${{ env.VERSION }}"
           Add-Content -Path $env:GITHUB_ENV -Value "RELEASE_NAME=$finalName"
 
       - name: Assemble Folder Structure
