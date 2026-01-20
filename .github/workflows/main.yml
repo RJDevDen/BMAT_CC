@@ -58,11 +58,8 @@ jobs:
       - name: Sign EXE
         shell: pwsh
         run: |
-          signtool sign `
-            /fd SHA256 `
-            /tr http://timestamp.digicert.com `
-            /td SHA256 `
-            BMAT_CC.exe
+          $Certificate = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -match "RJDevDen" }
+          Set-AuthenticodeSignature -FilePath "BMAT_CC.exe" -Certificate $Certificate
 
       - name: Set Release Filename
         id: filename_step
