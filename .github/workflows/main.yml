@@ -74,7 +74,7 @@ jobs:
         run: |
           $bundlePath = "staging/Data/Tools/BMAT_CC"
           New-Item -ItemType Directory -Path "$bundlePath/BSArch" -Force
-          Copy-Item -Path "./temp_build/BMAT_CC.exe" -Destination "$bundlePath/"
+          Copy-Item -Path "BMAT_CC.exe" -Destination "$bundlePath/"
           Copy-Item -Path "BSArch/BSArch.exe" -Destination "$bundlePath/BSArch/"
           Compress-Archive -Path "staging/*" -DestinationPath "${{ env.RELEASE_NAME }}.zip"
 
